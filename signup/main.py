@@ -44,7 +44,8 @@
 
 
 import psycopg
-from fastapi import FastAPI, HTTPException,Depends,Body
+from fastapi import FastAPI, HTTPException,Depends,Body,Request,Form
+from fastapi.responses import HTMLResponse,RedirectResponse
 from pydantic import BaseModel, EmailStr
 from passlib.hash import bcrypt
 from hashing import hash_the_password
@@ -52,17 +53,31 @@ from hashing import verify_password
 from dotenv import load_dotenv
 import os
 from typing import Annotated
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from typing import Annotated
+
+templates=Jinja2Templates(directory="templates")
 
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# using pydantic if you want to create an api without the any pages (htmls)
 class UserBase(BaseModel):
     username: str
     email: EmailStr
-    # full_name: str | None = None
-
-
+    
 class UserIn(UserBase):
     password: str
+    @classmethod
+    def as_form(
+        cls,
+        password: str = Form(...),
+        username: str = Form(...),
+        email:EmailStr=Form(...)
+    ):
+        return cls(password=password,username=username,email=email)
 
 
 class UserOut(UserBase):
@@ -105,8 +120,21 @@ def get_db():
 # ... Rest of the code ...
 
 # Endpoints
+@app.get("/")
+def main(request:Request):
+    return templates.TemplateResponse("sign_up.html",{"request":request})
+
+
+
+# user_in: UserIn, 
 @app.post("/register", response_model=UserOut)
-async def register(user_in: UserIn, conn = Depends(get_db)) -> UserOut:
+async def register(
+    conn = Depends(get_db),
+    user_in: UserIn = Depends(UserIn.as_form)
+    # username:str=Form(),
+    # password:str=Form(),
+    # email:str=Form()
+    ) -> UserOut:
     cursor = conn.cursor()
     # cursor.execute("INSERT INTO student (name) VALUES (%s) RETURNING student_id", (student,))
 
@@ -128,10 +156,14 @@ async def register(user_in: UserIn, conn = Depends(get_db)) -> UserOut:
     conn.commit()
     print(user_data)
     
-    return UserOut(
-        username=user_data[0],
-        email=user_data[1],
-    )
+    # return UserOut(
+    #     username=user_data[0],
+    #     email=user_data[1],
+    # )
+    return {
+        "username":user_data[0],
+        "email":user_data[1]
+    }
 
 @app.post("/login")
 async def login(for_login :Annotated[For_login,Body(...)], conn = Depends(get_db)):

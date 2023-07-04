@@ -9,3 +9,5 @@ pydantic~=1.8
 uvicorn~=0.22
 passlib~=1.7
 pydantic[email]
+jinja2
+python-multipart

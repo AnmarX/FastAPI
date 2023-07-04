@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Signup and Login</title>
+  <link href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <h2>Signup and Login</h2>
+
+    <form action="/register" id="signup-form" method="post">
+      <div class="form-group">
+        <label for="signup-username">Username</label>
+        <input type="text" id="username" name="username" required>
+      </div>
+
+      <div class="form-group">
+        <label for="signup-password">Password</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+
+      <div class="form-group">
+        <label for="signup-email">Email</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+
+      <div class="form-group">
+        <button type="submit">Signup</button>
+      </div>
+    </form>
+
+    <form method="post" id="login-form" style="display: none;">
+      <div class="form-group">
+        <label for="login-username">Username</label>
+        <input type="text" id="login-username" name="login-username" required>
+      </div>
+
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" name="login-password" required>
+      </div>
+
+      <div class="form-group">
+        <button type="submit">Login</button>
+      </div>
+    </form>
+
+    <div class="switch-form">
+      <a href="#" id="switch-link">Switch to Signup</a>
+    </div>
+  </div>
+
+  <script>
+    // Switch between signup and login forms
+    document.getElementById("switch-link").addEventListener("click", function(e) {
+      e.preventDefault();
+
+      var signupForm = document.getElementById("signup-form");
+      var loginForm = document.getElementById("login-form");
+
+      if (signupForm.style.display === "none") {
+        signupForm.style.display = "block";
+        loginForm.style.display = "none";
+        this.textContent = "Switch to Login";
+      } else {
+        signupForm.style.display = "none";
+        loginForm.style.display = "block";
+        this.textContent = "Switch to Signup";
+      }
+    });
+  </script>
+</body>
+</html>

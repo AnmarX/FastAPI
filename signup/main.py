@@ -87,6 +87,13 @@ class UserOut(UserBase):
 class For_login(BaseModel):
     username:str
     password:str
+    @classmethod
+    def as_formm(
+        cls,
+        username:str=Form(...),
+        password:str=Form(...)
+        ):
+        return cls(username=username,password=password)
 
 
 load_dotenv() 
@@ -166,7 +173,7 @@ async def register(
     }
 
 @app.post("/login")
-async def login(for_login :Annotated[For_login,Body(...)], conn = Depends(get_db)):
+async def login(conn = Depends(get_db),for_login :For_login =Depends(For_login.as_formm)):
     cursor = conn.cursor()
     
     # Retrieve user from the database based on the provided username
@@ -179,4 +186,4 @@ async def login(for_login :Annotated[For_login,Body(...)], conn = Depends(get_db
         if verify_password(for_login.password, stored_hashed_password):
             return {"message": "Login successful"}
     
-    raise HTTPException(status_code=401, detail="Invalid credentials")
+    return {"msg":"error"}

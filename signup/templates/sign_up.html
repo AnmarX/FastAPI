@@ -29,15 +29,15 @@
       </div>
     </form>
 
-    <form method="post" id="login-form" style="display: none;">
+    <form action="/login" method="post" id="login-form" style="display: none;">
       <div class="form-group">
         <label for="login-username">Username</label>
-        <input type="text" id="login-username" name="login-username" required>
+        <input type="text" id="login-username" name="username" required>
       </div>
 
       <div class="form-group">
         <label for="login-password">Password</label>
-        <input type="password" id="login-password" name="login-password" required>
+        <input type="password" id="login-password" name="password" required>
       </div>
 
       <div class="form-group">
@@ -46,19 +46,21 @@
     </form>
 
     <div class="switch-form">
-      <a href="#" id="switch-link">Switch to Signup</a>
+      <a href="#" id="switch-link">Switch to Login</a>
     </div>
   </div>
 
   <script>
-    // Switch between signup and login forms
     document.getElementById("switch-link").addEventListener("click", function(e) {
       e.preventDefault();
 
       var signupForm = document.getElementById("signup-form");
       var loginForm = document.getElementById("login-form");
 
-      if (signupForm.style.display === "none") {
+      var signupFormStyles = window.getComputedStyle(signupForm);
+      var signupFormDisplay = signupFormStyles.getPropertyValue("display");
+
+      if (signupFormDisplay === "none") {
         signupForm.style.display = "block";
         loginForm.style.display = "none";
         this.textContent = "Switch to Login";
@@ -68,6 +70,10 @@
         this.textContent = "Switch to Signup";
       }
     });
+
+
   </script>
+  
+  
 </body>
 </html>

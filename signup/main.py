@@ -93,8 +93,8 @@ class UserOut(UserBase):
 
 
 class For_login(BaseModel):
-    username:str=Form(...)
-    password:str=Form(...)
+    username:str
+    password:str
     # @classmethod
     # def as_formm(
     #     cls,
@@ -145,9 +145,9 @@ def main(request:Request):
 @app.post("/register", response_model=UserOut)
 async def register(
     conn = Depends(get_db),
-    username:str=Form(),
-    password:str=Form(),
-    email:str=Form()
+    username:str=Form(...),
+    password:str=Form(...),
+    email:str=Form(...)
     ) -> UserOut:
     user_in=UserIn(username=username,email=email,password=password)
     cursor = conn.cursor()
@@ -181,7 +181,12 @@ async def register(
     }
 
 @app.post("/login")
-async def login(for_login :For_login,conn = Depends(get_db)):
+async def login(
+    conn = Depends(get_db),
+    username:str=Form(...),
+    password:str=Form(...)
+                ):
+    for_login=For_login(username=username,password=password)
     cursor = conn.cursor()
     
     # Retrieve user from the database based on the provided username

@@ -46,16 +46,16 @@
 import psycopg
 from fastapi import FastAPI, HTTPException,Depends,Body,Request,Form
 from fastapi.responses import HTMLResponse,RedirectResponse
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr,constr
 from passlib.hash import bcrypt
 from hashing import hash_the_password
 from hashing import verify_password
 from dotenv import load_dotenv
 import os
-from typing import Annotated
+from fastapi.encoders import jsonable_encoder
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from typing import Annotated
+
 
 templates=Jinja2Templates(directory="templates")
 
@@ -63,21 +63,29 @@ app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+password_regex = "((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,64})"
+
+
 # using pydantic if you want to create an api without the any pages (htmls)
 class UserBase(BaseModel):
     username: str
     email: EmailStr
     
 class UserIn(UserBase):
-    password: str
-    @classmethod
-    def as_form(
-        cls,
-        password: str = Form(...),
-        username: str = Form(...),
-        email:EmailStr=Form(...)
-    ):
-        return cls(password=password,username=username,email=email)
+    password: str 
+    # @classmethod
+    # def as_form(
+    #     cls,
+    #     password: str = Form(...),
+    #     username: str = Form(...),
+    #     email:EmailStr=Form(...)
+    # ):
+    #     return cls(password=password,username=username,email=email)
+
+# @app.post("/submit/", response_model=User)
+# async def submit(nm: str = Form(...), pwd: str = Form(...)):
+#    return User(username=nm, password=pwd)
+
 
 
 class UserOut(UserBase):
@@ -85,15 +93,15 @@ class UserOut(UserBase):
 
 
 class For_login(BaseModel):
-    username:str
-    password:str
-    @classmethod
-    def as_formm(
-        cls,
-        username:str=Form(...),
-        password:str=Form(...)
-        ):
-        return cls(username=username,password=password)
+    username:str=Form(...)
+    password:str=Form(...)
+    # @classmethod
+    # def as_formm(
+    #     cls,
+    #     username:str=Form(...),
+    #     password:str=Form(...)
+    #     ):
+    #     return cls(username=username,password=password)
 
 
 load_dotenv() 
@@ -137,11 +145,11 @@ def main(request:Request):
 @app.post("/register", response_model=UserOut)
 async def register(
     conn = Depends(get_db),
-    user_in: UserIn = Depends(UserIn.as_form)
-    # username:str=Form(),
-    # password:str=Form(),
-    # email:str=Form()
+    username:str=Form(),
+    password:str=Form(),
+    email:str=Form()
     ) -> UserOut:
+    user_in=UserIn(username=username,email=email,password=password)
     cursor = conn.cursor()
     # cursor.execute("INSERT INTO student (name) VALUES (%s) RETURNING student_id", (student,))
 
@@ -150,7 +158,7 @@ async def register(
     if cursor.fetchone():
         raise HTTPException(status_code=400, detail="Username already exists")
     
-    hashed_password = hash_the_password(user_in.password)
+    hashed_password = hash_the_password(jsonable_encoder(user_in.password))
     
     # Insert new user into the database
     cursor.execute(
@@ -173,7 +181,7 @@ async def register(
     }
 
 @app.post("/login")
-async def login(conn = Depends(get_db),for_login :For_login =Depends(For_login.as_formm)):
+async def login(for_login :For_login,conn = Depends(get_db)):
     cursor = conn.cursor()
     
     # Retrieve user from the database based on the provided username

@@ -1,0 +1,57 @@
+/* styles.css */
+
+/* Body */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+  }
+  
+  /* Form */
+  form {
+    margin-bottom: 20px;
+  }
+  
+  form label {
+    font-weight: bold;
+  }
+  
+  form input[type="text"] {
+    padding: 10px;
+    width: 300px;
+    margin-right: 10px;
+  }
+  
+  form button[type="submit"] {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  
+  /* Todo List */
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  li {
+    margin-bottom: 10px;
+  }
+  
+  h2 {
+    background-color: #f0f0f0;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  
+  form.inline {
+    display: inline;
+    margin-left: 10px;
+  }
+  
+  form.inline button[type="submit"] {
+    background-color: #ff3333;
+  }
+  

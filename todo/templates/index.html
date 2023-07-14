@@ -11,9 +11,32 @@
     <input type="text" id="title" name="title" required>
     <button type="submit">Add</button>
 </form>
+<!-- every todo is associated with a button the html know that this button belong to a specific todo
+the html knows that the todo is with this button,
+when pressing the button the html know you pressed the button that belong to that todo
+
+In the given scenario, if you have two todos, "work" and "run," and you're rendering buttons for each todo,
+the HTML itself doesn't have direct knowledge of which specific button you clicked.
+However, you can associate each button with its corresponding todo item using a loop or other mechanisms.
 
 
-<h2>{{all}}</h2>
+-->
+<ul>
+  {% for todo in all %}
+    <li>
+      <h2>{{ todo.all_todos }}</h2>
+      <p>ID: {{ todo.id }}</p>
+      <form action="/update/{{ todo.id }}" method="post" style="display: inline;">
+        <button type="submit">Update</button>
+      </form>
+      <form action="/delete/{{ todo.id }}" method="post" style="display: inline;">
+        <!-- <input type="hidden" name="todo_id" value="{{ todo.id }}"> -->
+        <button type="submit">Delete</button>
+      </form>
+    </li>
+  {% endfor %}
+</ul>
+
 
     
 </body>

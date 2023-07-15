@@ -24,12 +24,12 @@ However, you can associate each button with its corresponding todo item using a 
 <ul>
   {% for todo in all %}
     <li>
-      <h2>{{ todo.all_todos }}</h2>
-      <p>ID: {{ todo.id }}</p>
+      <h2>{{ todo[0] }}</h2>
+      <p>ID: {{ todo[1] }}</p>
       <form action="/update/{{ todo.id }}" method="post" style="display: inline;">
         <button type="submit">Update</button>
       </form>
-      <form action="/delete/{{ todo.id }}" method="post" style="display: inline;">
+      <form action="/delete/{{ todo[1] }}" method="post" style="display: inline;">
         <!-- <input type="hidden" name="todo_id" value="{{ todo.id }}"> -->
         <button type="submit">Delete</button>
       </form>

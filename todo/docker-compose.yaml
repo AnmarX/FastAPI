@@ -34,14 +34,14 @@ services:
     ports:
       - 9999:8080
       
-  pgadmin:
-    image: dpage/pgadmin4:6.18
-    container_name: pgadmin_todo
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_MAIL}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PW}
-    ports:
-      - "5050:80"
+  # pgadmin:
+  #   image: dpage/pgadmin4:6.18
+  #   container_name: pgadmin_todo
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=${PGADMIN_MAIL}
+  #     - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PW}
+  #   ports:
+  #     - "5050:80"
     
 volumes:
   pg_data:

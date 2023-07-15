@@ -54,7 +54,7 @@ def get_cookie_html(request: Request, cookie: Annotated[Union[str, None], Cookie
     return templates.TemplateResponse("cookie.html",{"request": request,"cookie":cookie})
 
 
-@app.post("/get_cookie")
+@app.post("/get-cookie")
 async def save_name(name:Annotated[Union[str , None],Form()]=None):
     res=RedirectResponse("/cookies",status_code=status.HTTP_303_SEE_OTHER)
     if name:
@@ -71,10 +71,15 @@ def main(request:Request,conn=Depends(get_db)):
     cur=conn.cursor()
     todo_table=cur.execute("SELECT all_todos, id FROM todo")
     # # another way to do it
-    # todos = [( row[0], row[1]) for row in todo_table.fetchall()]
-    
+    """
+    todos = [( row[0], row[1]) for row in todo_table.fetchall()]
     todos = [{"all_todos": row[0], "id": row[1]} for row in todo_table.fetchall()]
-    
+    todos = [[row[0], row[1]] for row in todo_table.fetchall()]
+
+    these three do the same thing
+    """
+    todos = [[row[0], row[1]] for row in todo_table.fetchall()]
+
     return templates.TemplateResponse("index.html",{"request":request,"all":todos})
 
     # todos = []

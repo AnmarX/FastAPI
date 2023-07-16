@@ -135,7 +135,6 @@ def main(request:Request):
 # user_in: UserIn, 
 @app.post("/register", response_model=UserOut)
 async def register(
-    request:Request,
     conn = Depends(get_db),
     username:str=Form(...),
     password:str=Form(...),
@@ -168,12 +167,11 @@ async def register(
         }
             # cursor.execute("INSERT INTO student (name) VALUES (%s) RETURNING student_id", (student,))
     except ValidationError:
-        error_msg="wrong"
         # return templates.TemplateResponse("error.html", {"request": request, "error_message": error_msg,"name":user_in.username}, status_code=status.HTTP_303_SEE_OTHER)
         response = RedirectResponse("/error", status_code=status.HTTP_303_SEE_OTHER)
 
-        if user_in.username:
-            response.set_cookie(key="saved_name", value=user_in.username)
+        if ValidationError:
+            response.set_cookie(key="saved_name", value="hhggh")
         else:
             response.delete_cookie(key="saved_name")
             

@@ -44,8 +44,9 @@
 
 
 import psycopg
-from fastapi import FastAPI, HTTPException,Depends,Body,Request,Form
-from fastapi.responses import HTMLResponse,RedirectResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi import FastAPI, HTTPException,Depends,Body,Request,Form,status,Response,Cookie
+from fastapi.responses import HTMLResponse,RedirectResponse,JSONResponse
 from pydantic import BaseModel, EmailStr,constr
 from passlib.hash import bcrypt
 from hashing import hash_the_password
@@ -55,7 +56,9 @@ import os
 from fastapi.encoders import jsonable_encoder
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-
+import re
+from pydantic import ValidationError,Field
+from typing import Annotated
 
 templates=Jinja2Templates(directory="templates")
 
@@ -72,7 +75,7 @@ class UserBase(BaseModel):
     email: EmailStr
     
 class UserIn(UserBase):
-    password: str 
+    password: str = Field(..., regex=password_regex)
     # @classmethod
     # def as_form(
     #     cls,
@@ -82,11 +85,6 @@ class UserIn(UserBase):
     # ):
     #     return cls(password=password,username=username,email=email)
 
-# @app.post("/submit/", response_model=User)
-# async def submit(nm: str = Form(...), pwd: str = Form(...)):
-#    return User(username=nm, password=pwd)
-
-
 
 class UserOut(UserBase):
     pass
@@ -95,14 +93,7 @@ class UserOut(UserBase):
 class For_login(BaseModel):
     username:str
     password:str
-    # @classmethod
-    # def as_formm(
-    #     cls,
-    #     username:str=Form(...),
-    #     password:str=Form(...)
-    #     ):
-    #     return cls(username=username,password=password)
-
+   
 
 load_dotenv() 
 
@@ -144,41 +135,59 @@ def main(request:Request):
 # user_in: UserIn, 
 @app.post("/register", response_model=UserOut)
 async def register(
+    request:Request,
     conn = Depends(get_db),
     username:str=Form(...),
     password:str=Form(...),
     email:str=Form(...)
     ) -> UserOut:
-    user_in=UserIn(username=username,email=email,password=password)
-    cursor = conn.cursor()
-    # cursor.execute("INSERT INTO student (name) VALUES (%s) RETURNING student_id", (student,))
+    try:
+        user_in=UserIn(username=username,email=email,password=password)
+        cursor = conn.cursor()
 
-    # Check if username already exists
-    cursor.execute("SELECT * FROM users WHERE username = %s", (user_in.username,))
-    if cursor.fetchone():
-        raise HTTPException(status_code=400, detail="Username already exists")
+        cursor.execute("SELECT * FROM users WHERE username = %s", (user_in.username,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Username already exists")
+        
+        hashed_password = hash_the_password(jsonable_encoder(user_in.password))
+        
+        cursor.execute(
+            "INSERT INTO users (username, password_, email)"
+            "VALUES (%s, %s, %s) RETURNING username, email",
+            (user_in.username, hashed_password, user_in.email),
+        )
+        
+        user_data = cursor.fetchone()
+        conn.commit()
+        print(user_data)
+        
+        
+        return {
+            "username":user_data[0],
+            "email":user_data[1]
+        }
+            # cursor.execute("INSERT INTO student (name) VALUES (%s) RETURNING student_id", (student,))
+    except ValidationError:
+        error_msg="wrong"
+        # return templates.TemplateResponse("error.html", {"request": request, "error_message": error_msg,"name":user_in.username}, status_code=status.HTTP_303_SEE_OTHER)
+        response = RedirectResponse("/error", status_code=status.HTTP_303_SEE_OTHER)
+
+        if user_in.username:
+            response.set_cookie(key="saved_name", value=user_in.username)
+        else:
+            response.delete_cookie(key="saved_name")
+            
+        return response
     
-    hashed_password = hash_the_password(jsonable_encoder(user_in.password))
-    
-    # Insert new user into the database
-    cursor.execute(
-        "INSERT INTO users (username, password_, email)"
-        "VALUES (%s, %s, %s) RETURNING username, email",
-        (user_in.username, hashed_password, user_in.email),
-    )
-    
-    user_data = cursor.fetchone()
-    conn.commit()
-    print(user_data)
-    
+@app.get("/error",response_class=HTMLResponse)
+async def read_items(request: Request,saved_name:Annotated[str|None,Cookie()]=None):
+    error_msg="wrong"
+    return templates.TemplateResponse("error.html", {"request": request,"saved_name":saved_name,"error_message": error_msg})
+
     # return UserOut(
-    #     username=user_data[0],
-    #     email=user_data[1],
-    # )
-    return {
-        "username":user_data[0],
-        "email":user_data[1]
-    }
+        #     username=user_data[0],
+        #     email=user_data[1],
+        # )
 
 @app.post("/login")
 async def login(

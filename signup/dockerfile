@@ -1,4 +1,4 @@
-FROM python:3.9.13-slim
+FROM python:3.11.4-bullseye
 # RUN /bin/sh -c pip install --no-cache-dir -r requirements.txt
 RUN apt-get update && apt-get -y install libpq-dev gcc && pip install psycopg
 
@@ -13,6 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /usr/src/app
 
 
+COPY templates ./templates
+COPY static ./static
 
 # COPY openapi_server ./
 

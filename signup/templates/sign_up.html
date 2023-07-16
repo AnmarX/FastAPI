@@ -9,15 +9,21 @@
     <h2>Signup and Login</h2>
 
     <form action="/register" id="signup-form" method="post">
+      {% block content %}
       <div class="form-group">
         <label for="username">Username</label>
         <input type="text" id="username" name="username" required>
       </div>
+      
 
       <div class="form-group">
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required>
+        
+        <!-- <p class="error-message">{{ error_message }}</p> -->
+       
       </div>
+      {% endblock %}
 
       <div class="form-group">
         <label for="email">Email</label>
@@ -70,10 +76,6 @@
         this.textContent = "Switch to Signup";
       }
     });
-
-
   </script>
-  
-  
 </body>
 </html>

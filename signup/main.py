@@ -44,7 +44,7 @@
 
 
 import psycopg
-from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import ValidationException
 from fastapi import FastAPI, HTTPException,Depends,Body,Request,Form,status,Response,Cookie
 from fastapi.responses import HTMLResponse,RedirectResponse,JSONResponse
 from pydantic import BaseModel, EmailStr,constr
@@ -142,11 +142,16 @@ async def register(
     ) -> UserOut:
     try:
         user_in=UserIn(username=username,email=email,password=password)
+
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM users WHERE username = %s", (user_in.username,))
         if cursor.fetchone():
             raise HTTPException(status_code=400, detail="Username already exists")
+        
+        cursor.execute("SELECT * FROM users WHERE email = %s", (user_in.email,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Email already exists")
         
         hashed_password = hash_the_password(jsonable_encoder(user_in.password))
         
@@ -166,21 +171,37 @@ async def register(
             "email":user_data[1]
         }
             # cursor.execute("INSERT INTO student (name) VALUES (%s) RETURNING student_id", (student,))
-    except ValidationError:
+    except Exception as e:
         # return templates.TemplateResponse("error.html", {"request": request, "error_message": error_msg,"name":user_in.username}, status_code=status.HTTP_303_SEE_OTHER)
         response = RedirectResponse("/error", status_code=status.HTTP_303_SEE_OTHER)
+        cookies = [
+        {"key": "user_name", "value": username},
+        {"key": "email", "value": email}
+             ]
+        
+        for cookie in cookies:  
+            if e:
+                response.set_cookie(**cookie)
+            else:
+                response.delete_cookie(**cookie)
 
-        if ValidationError:
-            response.set_cookie(key="saved_name", value="hhggh")
-        else:
-            response.delete_cookie(key="saved_name")
+        # if e:
+        #     response.set_cookie(key="saved_name", value=username)
+        # else:
+        #     response.delete_cookie(key="saved_name")
             
         return response
     
 @app.get("/error",response_class=HTMLResponse)
-async def read_items(request: Request,saved_name:Annotated[str|None,Cookie()]=None):
+async def read_items(
+    request: Request,
+    user_name:Annotated[str|None,Cookie()]=None,
+    email:Annotated[str|None,Cookie()]=None
+    ):
     error_msg="wrong"
-    return templates.TemplateResponse("error.html", {"request": request,"saved_name":saved_name,"error_message": error_msg})
+    return templates.TemplateResponse(
+    "error.html", 
+    {"request": request,"user_name":user_name,"error_message": error_msg,"email_":email})
 
     # return UserOut(
         #     username=user_data[0],

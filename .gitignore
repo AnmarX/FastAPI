@@ -1,0 +1,7 @@
+pg_data
+__pycache__
+*.init
+.DS_Store
+.env
+./signup/pg_data/
+

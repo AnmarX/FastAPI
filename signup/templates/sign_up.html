@@ -23,16 +23,17 @@
         <!-- <p class="error-message">{{ error_message }}</p> -->
        
       </div>
-      {% endblock %}
+      
 
       <div class="form-group">
         <label for="email">Email</label>
         <input type="email" id="email" name="email" required>
       </div>
-
+      {% endblock %}
       <div class="form-group">
         <button type="submit">Signup</button>
       </div>
+      
     </form>
 
     <form action="/login" method="post" id="login-form" style="display: none;">

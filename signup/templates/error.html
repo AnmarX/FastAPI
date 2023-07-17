@@ -3,11 +3,18 @@
 {% block content %}
 <div class="form-group">
   <label for="username">Username</label>
-  <input type="text" id="username" name="username" value="{{ saved_name }}" required>
+  <input type="text" id="username" name="username" value="{{ user_name }}" required>
 </div>
+
 <div class="form-group">
   <label for="password">Password</label>
   <input type="password" id="password" name="password" required>
-  <p class="error-message">{{ error_message }}</p>
+  <p id="the-error">{{error_message}}</p>
+  <!-- <p class="error-message">{{ error_message }}</p> -->
+ 
+</div>
+<div class="form-group">
+  <label for="email">Email</label>
+  <input type="email" id="email" name="email" value="{{ email_ }}" required>
 </div>
 {% endblock %}

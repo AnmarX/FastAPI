@@ -171,7 +171,7 @@ async def register(
             "email":user_data[1]
         }
             # cursor.execute("INSERT INTO student (name) VALUES (%s) RETURNING student_id", (student,))
-    except Exception as e:
+    except ValidationError:
         # return templates.TemplateResponse("error.html", {"request": request, "error_message": error_msg,"name":user_in.username}, status_code=status.HTTP_303_SEE_OTHER)
         response = RedirectResponse("/error", status_code=status.HTTP_303_SEE_OTHER)
         cookies = [
@@ -180,7 +180,7 @@ async def register(
              ]
         
         for cookie in cookies:  
-            if e:
+            if ValidationError:
                 response.set_cookie(**cookie)
             else:
                 response.delete_cookie(**cookie)

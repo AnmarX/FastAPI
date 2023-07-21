@@ -135,6 +135,7 @@ def main(request:Request):
 # user_in: UserIn, 
 @app.post("/register", response_model=UserOut)
 async def register(
+    request:Request,
     conn = Depends(get_db),
     username:str=Form(...),
     password:str=Form(...),
@@ -174,10 +175,28 @@ async def register(
     except ValidationError:
         # return templates.TemplateResponse("error.html", {"request": request, "error_message": error_msg,"name":user_in.username}, status_code=status.HTTP_303_SEE_OTHER)
         response = RedirectResponse("/error", status_code=status.HTTP_303_SEE_OTHER)
+
+        form_data = await request.form()
+        user=form_data["username"]
+        pas=form_data["password"]
+
         cookies = [
-        {"key": "user_name", "value": username},
-        {"key": "email", "value": email}
+        {"key": "user_name", "value": user},
+        {"key": "email", "value": pas}
              ]
+        
+        # this is worng
+        # cookies = [
+        # {"key": "user_name", "value": request.form["username"]},
+        # {"key": "email", "value": request.form["password"]}
+        #      ]
+        
+
+        # cookies = [
+        # {"key": "user_name", "value": username},
+        # {"key": "email", "value": password}
+        #      ]
+
         
         for cookie in cookies:  
             if ValidationError:

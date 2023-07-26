@@ -56,9 +56,10 @@ import os
 from fastapi.encoders import jsonable_encoder
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-import re
 from pydantic import ValidationError,Field
 from typing import Annotated
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from passlib.context import CryptContext
 
 templates=Jinja2Templates(directory="templates")
 
@@ -93,7 +94,35 @@ class UserOut(UserBase):
 class For_login(BaseModel):
     username:str
     password:str
-   
+
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: str | None = None
+
+
+class User(BaseModel):
+    username: str
+    email: str | None = None
+    full_name: str | None = None
+    disabled: bool | None = None
+
+
+class UserInDB(User):
+    hashed_password: str
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+
 
 load_dotenv() 
 
@@ -172,6 +201,7 @@ async def register(
             "email":user_data[1]
         }
             # cursor.execute("INSERT INTO student (name) VALUES (%s) RETURNING student_id", (student,))
+    # #validtionerror is for the password regex
     except ValidationError:
         # return templates.TemplateResponse("error.html", {"request": request, "error_message": error_msg,"name":user_in.username}, status_code=status.HTTP_303_SEE_OTHER)
         response = RedirectResponse("/error", status_code=status.HTTP_303_SEE_OTHER)

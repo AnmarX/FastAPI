@@ -1,0 +1,47 @@
+version: "3"
+services:
+  db:
+    image: postgis/postgis:15-3.3-alpine
+    container_name: postgis_fastapi_security
+    environment:
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PW}
+      - POSTGRES_DB=${PG_DB}
+      # - POSTGRES_HOST_AUTH_METHOD=trust
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    volumes:
+      - ./db/CREATE_ALL_TABLE.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./pg_data:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER}"]
+      interval: 30s
+      timeout: 30s
+      retries: 20
+
+  pyscript_for_openapi:
+    container_name: fastapi_security
+    env_file: .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    # the 9999 is on my machine but the 8080 inside the container 
+    # the port here is only for mapping but in dockerfile the port to specify the port that the app will run inside the container
+    ports:
+      - 9999:8080
+      
+  pgadmin:
+    image: dpage/pgadmin4:6.18
+    container_name: pgadmin_security
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_MAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PW}
+    ports:
+      - "5050:80"
+    
+volumes:
+  pg_data:

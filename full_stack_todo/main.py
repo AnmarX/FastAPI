@@ -5,7 +5,8 @@ from fastapi.requests import Request
 from fastapi.staticfiles import StaticFiles
 from db_connection.connection import get_db
 from pydantic.fields import Field
-
+from fastapi.exceptions import HTTPException
+from hashing import hash_the_password,verify_password
 from fastapi.responses import RedirectResponse,Response
 from typing import Annotated
 
@@ -60,6 +61,12 @@ async def signup(
                  ):
     return templates.TemplateResponse("missmatch_pass.html", {"request": request,"email_cookie":email_cookie})
 
+@app.get("/logged")
+async def signup(
+    request: Request
+                 ):
+    return templates.TemplateResponse("logged_in.html", {"request": request})
+
 
 # 4
 @app.get("show-todos")
@@ -78,8 +85,30 @@ conn=Depends(get_db)
 
 ):
     try:
-        UserPassword(email=email,password_=apass)
-        return {"mgs":"no error"}
+        user_in= UserPassword(email=email,password_=apass)
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM users WHERE username = %s", (user_in.username,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Username already exists")
+        
+        cursor.execute("SELECT * FROM users WHERE email = %s", (user_in.email,))
+        if cursor.fetchone():
+            raise HTTPException(status_code=400, detail="Email already exists")
+        
+        hashed_password = hash_the_password(user_in.password)
+        # cur.execute("INSERT INTO users (hashed_password,username,email,disables) VALUES (%s,%s,%s,'True')",
+        #         (hashed_password,username,email))
+
+        cursor.execute(
+            "INSERT INTO users (email, password_,disables)"
+            "VALUES (%s, %s,'True') RETURNING email",
+            (user_in.email, hashed_password),
+        )
+        
+        user_data = cursor.fetchone()
+        conn.commit()
+        print(user_data)
 
     except ValidationError:
        

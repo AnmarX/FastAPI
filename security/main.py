@@ -123,6 +123,7 @@ async def get_current_user(token: Annotated[str|None, Cookie()]=None,conn=Depend
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
+        # no need to save it on a class but its more for hinting and validation
         token_data = TokenData(username=username)
     except (JWTError,TypeError,AttributeError):
         raise credentials_exception
@@ -155,8 +156,15 @@ def insert(
     email:EmailStr,
     conn=Depends(get_db)
     ):
+
+
     hashed_password=get_password_hash(password)
     cur=conn.cursor()
+    cur.execute("SELECT * FROM users WHERE username = %s", (username,))
+    if cur.fetchone():
+        raise HTTPException(status_code=400, detail="Username already exists")
+        
+
     cur.execute("INSERT INTO users (hashed_password,username,email,disables) VALUES (%s,%s,%s,'True')",
                 (hashed_password,username,email))
     conn.commit()

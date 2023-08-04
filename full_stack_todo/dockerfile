@@ -1,0 +1,21 @@
+FROM python:3.11.4-bullseye
+# RUN /bin/sh -c pip install --no-cache-dir -r requirements.txt
+RUN apt-get update && apt-get -y install libpq-dev gcc && pip install psycopg
+
+
+WORKDIR /app
+
+COPY requirements.txt /app
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . /app
+
+
+COPY templates app/templates
+COPY static app/static
+
+# COPY openapi_server ./
+
+# the port here is the port inside that continer so the app will start at port 8080 inside the container
+CMD ["uvicorn","main:app","--host","0.0.0.0","--port","8080"]

@@ -5,64 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
     <title>Document</title>
-    <style>
-      .small-box {
-        background-color: #f0f0f0;
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 5px;
-        color: red;
-        border: 1px solid red;
-        font-size: smaller;
-        
-          }
-      .small-box ul {
-          padding-left: 20px; /* Add some left padding to the list items */
-      }
-
-      .small-box ul li {
-        text-align: left;
-        margin-bottom: 5px; /* Add some spacing between the list items */
-      }
-
-
-    </style>
 </head>
 <body>
     <!-- multistep form -->
-    <form id="msform" method="post" action="/register">
+    <form id="msform" method="post">
         <!-- progressbar -->
         <ul id="progressbar">
-          <li class="active">Account Setup</li>
-          <li>Account Details</li>
+          <li class="active">login</li>
+          <!-- <li>Account Details</li> -->
           <!-- <li>Personal Details</li> -->
         </ul>
         <!-- fieldsets -->
-      
+        {% block content %}
         <fieldset >
-          <h2 class="fs-title">Create your account</h2>
+          <h2 class="fs-title">login</h2>
           <h3 class="fs-subtitle">This is step 1</h3>
-          <div class="small-box">
-            <p>Password should have:</p>
-            <ul>
-                <li>At least one special character (@!..)</li>
-                <li>At least one number</li>
-                <li>At least one uppercase and lowercase alphabetic character</li>
-            </ul>
-        </div>
+          <input id="email" type="email" name="email" placeholder="Email" />
+          <p id="emailMatchError" style="display: none; color: red;">write email</p>
           <input id="passwordd" type="password" name="apass" placeholder="Password" />
-          <input id="confirmPassword" type="password" name="cpass" placeholder="Confirm Password"/>
-          <p id="passwordMatchError" style="display: none; color: red;">Passwords do not match.</p>
-          <input id="email" type="email" name="email" placeholder="exmaple@exmaple.com" />
-          <p id="emailMatchError" style="display: none; color: red;">Write email in correct format</p>
-          <input id="btn" type="button" name="next" class="next action-button" value="Next" disabled/>
+          <p id="passwordMatchError" style="display: none; color: red;">Enter password</p>
+          <input  id="btn" type="submit" name="next" class="next action-button" value="Next" disabled/>
           <!-- <button type="submit" class="next action-button">Submit</button> -->
         </fieldset>
-      
+        {% endblock %}
           <!-- <a href="/register" class="next action-button">Next</a>  -->
           <!-- <input id="btn" type="button" name="next" class="next action-button" value="Submit"/> 
           
-      
+        
+
+
          <fieldset>
           <h2 class="fs-title">Social Profiles</h2>
           <h3 class="fs-subtitle">Your presence on the social network</h3>
@@ -72,7 +43,7 @@
           <input type="button" name="previous" class="previous action-button" value="Previous" />
           <input type="button" name="next" class="next action-button" value="Next" />
         </fieldset> -->
-        <fieldset>
+        <!-- <fieldset>
           <h2 class="fs-title">Personal Details</h2>
           <h3 class="fs-subtitle">We will never sell it</h3>
           <input type="text" name="fname" placeholder="First Name" />
@@ -81,7 +52,7 @@
           <textarea name="address" placeholder="Address"></textarea>
           <input type="button" name="previous" class="previous action-button" value="Previous" />
           <input type="submit" name="next" class="next action-button" value="submit"/>
-        </fieldset>
+        </fieldset> -->
     </form>
 
     <!-- Include jQuery library -->
@@ -91,11 +62,40 @@
     <!-- Include your external JavaScript file -->
     <script src="{{ url_for('static', path='/script.js') }}"></script>
     
-    <script src="{{ url_for('static', path='/validation.js') }}"></script>
 
-    <!-- ... (Previous HTML content) ... -->
+    <script>
+      
+        const email = document.getElementById("email");
+        const password = document.getElementById("passwordd");
+        // const confirmPassword = document.getElementById("confirmPassword");
+        const passwordMatchError = document.getElementById("passwordMatchError");
+        const emailMatchError = document.getElementById("emailMatchError");
+        const btn = document.getElementById("btn");
 
 
+        function updateButtonAndErrors() {
+        //   const passwordMatch = confirmPassword.value === password.value;
+          const emailValid = email.value.length > 0;
+          const passwordValid = password.value.length > 0;
+
+          btn.disabled = !(emailValid && passwordValid);
+
+          // Show/hide errors for password match and email
+          passwordMatchError.style.display = passwordValid ? "none" : "block";
+          emailMatchError.style.display = emailValid ? "none" : "block";
+        }
+
+        // Add event listeners to the input fields for input and blur events
+        // confirmPassword.addEventListener("input", updateButtonAndErrors);
+        // confirmPassword.addEventListener("blur", updateButtonAndErrors);
+
+        email.addEventListener("input", updateButtonAndErrors);
+        email.addEventListener("blur", updateButtonAndErrors);
+
+        password.addEventListener("input", updateButtonAndErrors);
+        password.addEventListener("blur", updateButtonAndErrors);
+
+</script>
 
 </body>
 </html>

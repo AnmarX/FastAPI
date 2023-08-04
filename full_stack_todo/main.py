@@ -68,6 +68,14 @@ async def signup(
     return templates.TemplateResponse("logged_in.html", {"request": request})
 
 
+@app.get("/log-in")
+async def signup(
+    request: Request
+                 ):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+
 # 4
 @app.get("show-todos")
 def show_todos():
@@ -80,7 +88,6 @@ def register(
 # response:Response,
 email:EmailStr=Form(...),
 apass:str=Form(...),
-cpass:str=Form(...),
 conn=Depends(get_db)
 
 ):
@@ -88,15 +95,15 @@ conn=Depends(get_db)
         user_in= UserPassword(email=email,password_=apass)
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM users WHERE username = %s", (user_in.username,))
-        if cursor.fetchone():
-            raise HTTPException(status_code=400, detail="Username already exists")
-        
         cursor.execute("SELECT * FROM users WHERE email = %s", (user_in.email,))
         if cursor.fetchone():
-            raise HTTPException(status_code=400, detail="Email already exists")
+            raise HTTPException(status_code=400, detail="email already exists")
         
-        hashed_password = hash_the_password(user_in.password)
+        # cursor.execute("SELECT * FROM users WHERE email = %s", (user_in.email,))
+        # if cursor.fetchone():
+        #     raise HTTPException(status_code=400, detail="Email already exists")
+        
+        hashed_password = hash_the_password(user_in.password_)
         # cur.execute("INSERT INTO users (hashed_password,username,email,disables) VALUES (%s,%s,%s,'True')",
         #         (hashed_password,username,email))
 

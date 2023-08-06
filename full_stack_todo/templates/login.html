@@ -8,7 +8,7 @@
 </head>
 <body>
     <!-- multistep form -->
-    <form id="msform" method="post">
+    <form id="msform" method="post"  action="/login">
         <!-- progressbar -->
         <ul id="progressbar">
           <li class="active">login</li>
@@ -16,7 +16,7 @@
           <!-- <li>Personal Details</li> -->
         </ul>
         <!-- fieldsets -->
-        {% block content %}
+        
         <fieldset >
           <h2 class="fs-title">login</h2>
           <h3 class="fs-subtitle">This is step 1</h3>
@@ -27,7 +27,7 @@
           <input  id="btn" type="submit" name="next" class="next action-button" value="Next" disabled/>
           <!-- <button type="submit" class="next action-button">Submit</button> -->
         </fieldset>
-        {% endblock %}
+      
           <!-- <a href="/register" class="next action-button">Next</a>  -->
           <!-- <input id="btn" type="button" name="next" class="next action-button" value="Submit"/> 
           
@@ -62,40 +62,9 @@
     <!-- Include your external JavaScript file -->
     <script src="{{ url_for('static', path='/script.js') }}"></script>
     
+    
+    <script src="{{ url_for('static', path='/login_validation.js') }}"></script>
 
-    <script>
-      
-        const email = document.getElementById("email");
-        const password = document.getElementById("passwordd");
-        // const confirmPassword = document.getElementById("confirmPassword");
-        const passwordMatchError = document.getElementById("passwordMatchError");
-        const emailMatchError = document.getElementById("emailMatchError");
-        const btn = document.getElementById("btn");
-
-
-        function updateButtonAndErrors() {
-        //   const passwordMatch = confirmPassword.value === password.value;
-          const emailValid = email.value.length > 0;
-          const passwordValid = password.value.length > 0;
-
-          btn.disabled = !(emailValid && passwordValid);
-
-          // Show/hide errors for password match and email
-          passwordMatchError.style.display = passwordValid ? "none" : "block";
-          emailMatchError.style.display = emailValid ? "none" : "block";
-        }
-
-        // Add event listeners to the input fields for input and blur events
-        // confirmPassword.addEventListener("input", updateButtonAndErrors);
-        // confirmPassword.addEventListener("blur", updateButtonAndErrors);
-
-        email.addEventListener("input", updateButtonAndErrors);
-        email.addEventListener("blur", updateButtonAndErrors);
-
-        password.addEventListener("input", updateButtonAndErrors);
-        password.addEventListener("blur", updateButtonAndErrors);
-
-</script>
 
 </body>
 </html>

@@ -1,0 +1,157 @@
+/* styles.css */
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f8f8f8;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* justify-content: center; Comment out this line */
+  min-height: 100vh;
+  margin-top: 20px; /* Add margin-top to push the todo list down a bit */
+}
+
+.todo-list-container {
+  flex: 1; /* Fill the remaining space with the todo list */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start; /* Align items to the top */
+}
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.add-todo-form {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+
+.add-todo-form label {
+  margin-right: 10px;
+  color: #333;
+}
+
+.add-todo-form input[type="text"] {
+  flex: 1;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.add-todo-form button {
+  padding: 5px 10px;
+  background-color: #4CAF50;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.add-todo-form button:hover {
+  background-color: #45a049;
+}
+
+.todo-list {
+  list-style: none;
+  padding: 0;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.todo-item:hover {
+  background-color: #f5f5f5;
+}
+
+.todo-item h2 {
+  margin: 0;
+  flex: 1;
+  color: #333;
+}
+
+.todo-item p {
+  margin: 0;
+  color: #666;
+  margin-right: 10px;
+}
+
+.toggle-completion {
+  margin-right: 10px;
+}
+
+.update-form, .delete-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.update-form button, .delete-form button {
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.update-form button:hover, .delete-form button:hover {
+  background-color: #0056b3;
+}
+
+/* Apply Flexbox for better alignment */
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* Apply Flexbox for horizontal alignment of buttons in each todo item */
+li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+}
+
+/* Apply strike-through effect for completed todos */
+li.completed h2 {
+  text-decoration: line-through;
+}
+
+/* Add animation to completed todos */
+.completed {
+  animation: completeAnimation 0.5s ease forwards;
+}
+
+@keyframes completeAnimation {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.5;
+  }
+}

@@ -148,8 +148,6 @@ async def signup(
 
 
 
-
-
 # @app.get("/login-page")
 # async def signup(
 #     request: Request,
@@ -163,12 +161,6 @@ async def signup(
 #     response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 #     return response
     
-
-    
-    
-
-
-
 
 
 

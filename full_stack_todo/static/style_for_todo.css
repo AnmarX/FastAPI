@@ -155,3 +155,8 @@ li.completed h2 {
     opacity: 0.5;
   }
 }
+
+
+button{
+  margin: 5px;
+}

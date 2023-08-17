@@ -24,7 +24,7 @@ templates=Jinja2Templates(directory="templates")
 
 app=FastAPI()
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
-app.include_router(models.router, prefix="/todo_CURD")
+app.include_router(models.router)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
@@ -43,7 +43,8 @@ class UserPassword(User):
     password_:str = Field(regex=password_regex)
     disables:bool
 
-
+class for_id(UserPassword):
+    user_id:int
 # class Dis(UserPassword):
 #     disables:bool
 
@@ -58,15 +59,17 @@ class UserPassword(User):
 
 
 
+
 def get_user(email,cur):
-    all=cur.execute("SELECT email,password_,disables FROM users WHERE email = %s", (email,))
-    get_user_info=[{"email":row[0],"password_":row[1],"disables":row[2]}for row in all.fetchall()]
+    all=cur.execute("SELECT email,password_,disables,user_id FROM users WHERE email = %s", (email,))
+    get_user_info=[{"email":row[0],"password_":row[1],"disables":row[2],"user_id":row[3]}for row in all.fetchall()]
     if get_user_info:
         for user in get_user_info:
-            return UserPassword(**user)
+            return for_id(**user)
 
 def authenticate_user(cur,email,password):
     user=get_user(email,cur)
+    print(user)
     if not user:
         return False
     if not verify_password(password,user.password_):
@@ -112,7 +115,7 @@ async def get_current_user(token: Annotated[str|None, Cookie()]=None,conn=Depend
 
 
 async def get_current_active_user(
-    current_user: Annotated[UserPassword, Depends(get_current_user)]
+    current_user: Annotated[for_id, Depends(get_current_user)]
 ):
     try:
         if not current_user.disables:
@@ -122,6 +125,12 @@ async def get_current_active_user(
 
 
     return current_user
+
+
+# just for testing and visual
+@app.get("/new-template")
+async def home(request: Request):
+    return templates.TemplateResponse("try.html", {"request": request})
 
 
 
@@ -164,17 +173,23 @@ async def signup(
 
 
 
-
 @app.get("/todos-page")
 async def signup(
     request: Request,
-    token=Depends(get_current_active_user)
+    token:Annotated[for_id,Depends(get_current_active_user)],
+    conn=Depends(get_db)
                  ):
-    print(token)
+    
     if token:
-        return templates.TemplateResponse("todoList.html", {"request": request})
+        cur=conn.cursor()
+        user_id=token.user_id
+        todo_table=cur.execute("SELECT all_todos,todo_id FROM todo WHERE user_id = %s", (user_id,))
+        # todo_table=cur.execute("SELECT all_todos, todo_id FROM todo")
+        all=[[row[0],row[1]] for row in todo_table.fetchall()]
+        return templates.TemplateResponse("todoList.html", {"request": request,"all":all})
    
     redirect_url = f"/login-page?msg=not valid token"
+    request.session["next_page"] = "/show-todos"
     response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
     return response
 
@@ -183,18 +198,19 @@ async def signup(
 @app.get("/show-todos",response_model=User)
 def show_todos(
     request:Request,
-    get_token:Annotated[UserPassword,Depends(get_current_active_user)],
+    get_token:Annotated[for_id,Depends(get_current_active_user)],
     token:Annotated[str,Cookie()]=None
 ):  
     # if the token is valdid it will take you to the todo app
     if get_token:
+        # print(get_token)
         redirect_url = f"/todos-page?token={token}"
         return RedirectResponse(redirect_url,status_code=status.HTTP_303_SEE_OTHER)
         # return get_token
     else:
         request.session["next_page"] = "/show-todos"
         redirect_url = f"/login-page?mgs=login to access the todo"
-        return RedirectResponse("/login-page",status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(redirect_url,status_code=status.HTTP_303_SEE_OTHER)
     
     
 

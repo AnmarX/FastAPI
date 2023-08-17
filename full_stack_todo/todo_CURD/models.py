@@ -39,15 +39,21 @@ async def add_todo(
 @router.post("/delete-todo/{todo_id}")
 async def delete_todo(
     todo_id:int,
+    request:Request,
     token:Annotated[for_id,Depends(get_current_active_user)],
     conn=Depends(get_db)
 ):  
-    user_id=token.user_id
-    cur=conn.cursor()
-    cur.execute("DELETE FROM todo WHERE user_id=%s AND todo_id=%s", (user_id,todo_id))
-    conn.commit()
-    response=RedirectResponse("/todos-page",status_code=status.HTTP_303_SEE_OTHER)
-    return response
+    try:
+        user_id=token.user_id
+        cur=conn.cursor()
+        cur.execute("DELETE FROM todo WHERE user_id=%s AND todo_id=%s", (user_id,todo_id))
+        conn.commit()
+        response=RedirectResponse("/todos-page",status_code=status.HTTP_303_SEE_OTHER)
+        return response
+    except (AttributeError):
+            request.session["next_page"] = "/show-todos"
+            redirect_url = f"/login-page?mgs=login to access the todo"
+            return RedirectResponse(redirect_url,status_code=status.HTTP_303_SEE_OTHER)
 
 @router.post("/complete-todo")
 async def delete_todo():

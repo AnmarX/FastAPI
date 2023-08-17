@@ -304,6 +304,7 @@ conn=Depends(get_db)
         user_data = cursor.fetchone()
         conn.commit()
         print(user_data)
+        RedirectResponse("/",status_code=status.HTTP_303_SEE_OTHER)
 
     except ValidationError as e:
 

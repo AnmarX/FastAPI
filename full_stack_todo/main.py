@@ -29,7 +29,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 5
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
 
 password_regex = "((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,64})"
@@ -57,6 +57,14 @@ class for_id(UserPassword):
    
 
 
+
+@app.middleware("http")
+async def some_middleware(request: Request, call_next):
+    response = await call_next(request)
+    session = request.cookies.get('session')
+    if session:
+        response.set_cookie(key='session', value=request.cookies.get('session'), httponly=True,max_age=60)
+    return response
 
 
 
@@ -176,6 +184,7 @@ async def signup(
 @app.get("/todos-page")
 async def signup(
     request: Request,
+    for_session:Response,
     token:Annotated[for_id,Depends(get_current_active_user)],
     conn=Depends(get_db)
                  ):
@@ -188,10 +197,15 @@ async def signup(
         all=[[row[0],row[1]] for row in todo_table.fetchall()]
         return templates.TemplateResponse("todoList.html", {"request": request,"all":all})
    
-    redirect_url = f"/login-page?msg=not valid token"
+
     request.session["next_page"] = "/show-todos"
+    redirect_url = f"/login-page?msg=not valid token"
     response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
     return response
+
+  
+
+    
 
 
 # 4
@@ -209,6 +223,7 @@ def show_todos(
         # return get_token
     else:
         request.session["next_page"] = "/show-todos"
+        # for_session.set_cookie(key="next_page",max_age=30)
         redirect_url = f"/login-page?mgs=login to access the todo"
         return RedirectResponse(redirect_url,status_code=status.HTTP_303_SEE_OTHER)
     
@@ -261,10 +276,10 @@ def login(
     
     redirect_url = f"/logedin-page?token={access_token}"
     response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
-    response.set_cookie(key="token", value=access_token, httponly=True, max_age=1800)
+    response.set_cookie(key="token", value=access_token, httponly=True, max_age=900)
     if next_page:
         response= RedirectResponse(url=next_page, status_code=status.HTTP_303_SEE_OTHER)
-        response.set_cookie(key="token", value=access_token, httponly=True, max_age=1800)
+        response.set_cookie(key="token", value=access_token, httponly=True, max_age=900)
         return response
     return response
     # response = RedirectResponse("/logedin-page",status_code=status.HTTP_303_SEE_OTHER)
@@ -314,9 +329,13 @@ conn=Depends(get_db)
         return back
         
     
-         
+@app.get("/sign-out")
+def sign_out(
+):
+    res=RedirectResponse("/")
+    res.delete_cookie(key="token")
+    return res
 
-    
     
 
 # 2

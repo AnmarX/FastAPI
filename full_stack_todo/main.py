@@ -265,6 +265,7 @@ def login(
     )
     cur=conn.cursor()
     user=authenticate_user(cur,email,apass)
+    # #modify here
     if not user:
         return credentials_exception
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -319,8 +320,8 @@ conn=Depends(get_db)
         user_data = cursor.fetchone()
         conn.commit()
         print(user_data)
-        RedirectResponse("/",status_code=status.HTTP_303_SEE_OTHER)
-
+        res=RedirectResponse("/",status_code=status.HTTP_303_SEE_OTHER)
+        return res
     except ValidationError as e:
 
         print(e)

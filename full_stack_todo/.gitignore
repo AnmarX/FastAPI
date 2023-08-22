@@ -7,3 +7,5 @@ DS.store
 ./signup/.env
 signup/pg_data/
 .DS_Store
+certs
+./certs

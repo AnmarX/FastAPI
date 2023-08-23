@@ -2,6 +2,7 @@
 
 
 # create .env file and two variables proxy(the url of the app) domain(ip of the VM or the domain)
+# curl -sSL https://raw.githubusercontent.com/AnmarX/FastAPI/main/full_stack_todo/server.sh
 
 # Read the domain name from domain.txt
 domain=$(cat domain.txt)
@@ -15,9 +16,6 @@ sudo apt install git-all
 
 git clone https://github.com/AnmarX/FastAPI.git
 
-env_file_path="./home/anmar/.env"
-
-sudo mv "$env_file_path" "./home/anmar/FastAPI/full_stack_todo"
 
 # Install Nginx
 
@@ -62,9 +60,4 @@ sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 
-cd FastAPI
-
-cd full_stack_todo
-
-sudo docker compose up --build
 

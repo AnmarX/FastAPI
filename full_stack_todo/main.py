@@ -336,8 +336,3 @@ def sign_out(
     res=RedirectResponse("/")
     res.delete_cookie(key="token")
     return res
-
-
-
-
-

@@ -337,15 +337,6 @@ def sign_out(
     res.delete_cookie(key="token")
     return res
 
-    
-
-# 2
-
-
-
-
-
-
 
 
 

@@ -47,7 +47,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 
-app.post("/send-email")
 async def send_email(
         token: Annotated[str|None, Cookie()]=None
 ):
@@ -69,27 +68,13 @@ async def send_email(
     """
     message = MessageSchema(
        subject="Fastapi-Mail module",
-       recipients=,  # List of recipients, as many as you can pass  
+       recipients="sd",  # List of recipients, as many as you can pass  
        body=template,
        subtype="html"
        )
     
     fm = FastMail(conf)
     await fm.send_message(message)
-
-
-app.post("/verify-email")
-async def verify_email(
-        conn=Depends(get_db)
-
-):
-    pass
-    # cursor = conn.cursor()
-    # cursor.execute(
-    #         "INSERT INTO users (email, password_,disables)"
-    #         "VALUES (%s, %s,'False') RETURNING email",
-    #         (user_in.email, hashed_password),
-    #     )
 
 
 
@@ -133,33 +118,6 @@ async def some_middleware(request: Request, call_next):
     return response
 
 
-def verify_func():
-    template=f"""
-    <!DOCTYPE html>
-        <html lang="en">
-        <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Document</title>
-        </head>
-        <body>
-        <a href="/verify-email{token}">
-            please verify your account
-        </a>
-        </body>
-        </html>
-    """
-    message = MessageSchema(
-       subject="Fastapi-Mail module",
-       recipients="sds",  # List of recipients, as many as you can pass  
-       body=template,
-       subtype="html"
-       )
-    
-    fm = FastMail(conf)
-    await fm.send_message(message)
-    
 
 
 

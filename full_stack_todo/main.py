@@ -15,17 +15,83 @@ from todo_CURD import models
 import os
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 
 load_dotenv()
 SECRET_KEY=os.getenv("secret_key")
 ALGORITHM=os.getenv("ALGORITHM")
+email_pass=os.getenv("email_pass")
+email_for_msg=os.getenv("email_for_msg")
 
 templates=Jinja2Templates(directory="templates")
+
+
+conf = ConnectionConfig(
+    MAIL_USERNAME = email_for_msg,
+    MAIL_PASSWORD = email_pass,
+    MAIL_FROM = email_for_msg,
+    MAIL_PORT = 587,
+    MAIL_SERVER = "smtp.gmail.com",
+    MAIL_STARTTLS = True,
+    MAIL_SSL_TLS = False,
+    USE_CREDENTIALS = True,
+    VALIDATE_CERTS = True
+)
+
+
 
 app=FastAPI()
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 app.include_router(models.router)
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+
+app.post("/send-email")
+async def send_email(
+        token: Annotated[str|None, Cookie()]=None
+):
+    template=f"""
+    <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        </head>
+        <body>
+        <a href="/verify-email{token}">
+            please verify your account
+        </a>
+        </body>
+        </html>
+    """
+    message = MessageSchema(
+       subject="Fastapi-Mail module",
+       recipients=,  # List of recipients, as many as you can pass  
+       body=template,
+       subtype="html"
+       )
+    
+    fm = FastMail(conf)
+    await fm.send_message(message)
+
+
+app.post("/verify-email")
+async def verify_email(
+        conn=Depends(get_db)
+
+):
+    pass
+    # cursor = conn.cursor()
+    # cursor.execute(
+    #         "INSERT INTO users (email, password_,disables)"
+    #         "VALUES (%s, %s,'False') RETURNING email",
+    #         (user_in.email, hashed_password),
+    #     )
+
+
 
 
 
@@ -65,6 +131,35 @@ async def some_middleware(request: Request, call_next):
     if session:
         response.set_cookie(key='session', value=request.cookies.get('session'), httponly=True,max_age=60)
     return response
+
+
+def verify_func():
+    template=f"""
+    <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        </head>
+        <body>
+        <a href="/verify-email{token}">
+            please verify your account
+        </a>
+        </body>
+        </html>
+    """
+    message = MessageSchema(
+       subject="Fastapi-Mail module",
+       recipients="sds",  # List of recipients, as many as you can pass  
+       body=template,
+       subtype="html"
+       )
+    
+    fm = FastMail(conf)
+    await fm.send_message(message)
+    
 
 
 
@@ -310,7 +405,10 @@ conn=Depends(get_db)
             raise HTTPException(status_code=400, detail="email already exists")
        
         hashed_password = hash_the_password(user_in.password_)
-        
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+        data={"sub": user_in.email}, expires_delta=access_token_expires
+        )        
         cursor.execute(
             "INSERT INTO users (email, password_,disables)"
             "VALUES (%s, %s,'True') RETURNING email",
@@ -321,6 +419,7 @@ conn=Depends(get_db)
         conn.commit()
         print(user_data)
         res=RedirectResponse("/",status_code=status.HTTP_303_SEE_OTHER)
+        res.set_cookie(key="token", value=access_token, httponly=True, max_age=900)
         return res
     except ValidationError as e:
 

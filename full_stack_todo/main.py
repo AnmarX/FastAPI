@@ -7,7 +7,7 @@ from db_connection.connection import get_db
 from pydantic.fields import Field
 from fastapi.exceptions import HTTPException
 from hashing import hash_the_password,verify_password
-from fastapi.responses import RedirectResponse,Response,JSONResponse
+from fastapi.responses import RedirectResponse,Response,JSONResponse,HTMLResponse
 from typing import Annotated
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
@@ -16,6 +16,8 @@ import os
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+import time
+from typing import List
 
 load_dotenv()
 SECRET_KEY=os.getenv("secret_key")
@@ -41,40 +43,15 @@ conf = ConnectionConfig(
 
 
 app=FastAPI()
+fm = FastMail(conf)
+
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+
 app.include_router(models.router)
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-
-async def send_email(
-        token: Annotated[str|None, Cookie()]=None
-):
-    template=f"""
-    <!DOCTYPE html>
-        <html lang="en">
-        <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Document</title>
-        </head>
-        <body>
-        <a href="/verify-email{token}">
-            please verify your account
-        </a>
-        </body>
-        </html>
-    """
-    message = MessageSchema(
-       subject="Fastapi-Mail module",
-       recipients="sd",  # List of recipients, as many as you can pass  
-       body=template,
-       subtype="html"
-       )
-    
-    fm = FastMail(conf)
-    await fm.send_message(message)
 
 
 
@@ -85,6 +62,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
 password_regex = "((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,64})"
 
+
+# class EmailSchema(BaseModel):
+#     email_verify: List[EmailStr]
 
 class User(BaseModel):
     email:EmailStr
@@ -178,14 +158,74 @@ async def get_current_user(token: Annotated[str|None, Cookie()]=None,conn=Depend
 async def get_current_active_user(
     current_user: Annotated[for_id, Depends(get_current_user)]
 ):
+    # NEXT ADD here if the user register and the email valildation expired add
+    # a button to send to them again
+
     try:
         if not current_user.disables:
-            raise HTTPException(status_code=400, detail="Inactive user")
+            raise HTTPException(status_code=400, detail="you need to active your account with the email we sent you")
     except AttributeError:
         return False
 
 
     return current_user
+
+
+
+
+async def send_email(
+        user_email:list[EmailStr],    
+        token:str    
+):
+    
+    template=f"""
+    <!DOCTYPE html>
+        <html lang="en">
+        <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        </head>
+        <body>
+        <a href="http://localhost:9999/verify-email?token={token}">
+            please verify your account
+        </a>
+        </body>
+        </html>
+    """
+    message = MessageSchema(
+       subject="Fastapi-Mail module",
+       recipients=user_email,  # List of recipients, as many as you can pass  
+       body=template,
+       subtype="html"
+       )
+    
+    await fm.send_message(message)
+    return "email sent"
+
+
+
+
+@app.get("/verify-email")
+async def verifying(
+        token:Annotated[for_id,Depends(get_current_user)],
+        conn=Depends(get_db)
+):
+    cursor=conn.cursor()
+    print(token.user_id)
+    print(token.disables)
+    if token:
+        if not token.disables:
+            cursor.execute("UPDATE users SET disables = %s WHERE user_id = %s", (True,token.user_id))
+            conn.commit()
+            return {"msg":"done"}
+            # return RedirectResponse("/logedin-page",status_code=status.HTTP_303_SEE_OTHER)
+
+    return {"mg":"none"}
+    
+    
+
 
 
 # just for testing and visual
@@ -346,7 +386,7 @@ def login(
 
 # 1
 @app.post("/register")
-def register(
+async def register(
 # request:Request,
 # response:Response,
 email:EmailStr=Form(...),
@@ -355,29 +395,34 @@ conn=Depends(get_db)
 
 ):
     try:
-        user_in= UserPassword(email=email,password_=apass,disables=True)
+        user_in= UserPassword(email=email,password_=apass,disables=False)
+        # validation_for_email=EmailSchema(email_verify=email)
         cursor = conn.cursor()
 
         cursor.execute("SELECT * FROM users WHERE email = %s", (user_in.email,))
         if cursor.fetchone():
             raise HTTPException(status_code=400, detail="email already exists")
-       
+        
+        
+
         hashed_password = hash_the_password(user_in.password_)
+
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
         data={"sub": user_in.email}, expires_delta=access_token_expires
         )        
+        await send_email([user_in.email],access_token)
         cursor.execute(
             "INSERT INTO users (email, password_,disables)"
-            "VALUES (%s, %s,'True') RETURNING email",
+            "VALUES (%s, %s,'False') RETURNING email",
             (user_in.email, hashed_password),
         )
-        
-        user_data = cursor.fetchone()
         conn.commit()
+        user_data = cursor.fetchone()
+        
         print(user_data)
         res=RedirectResponse("/",status_code=status.HTTP_303_SEE_OTHER)
-        res.set_cookie(key="token", value=access_token, httponly=True, max_age=900)
+        res.set_cookie(key="token", value=access_token, httponly=True, max_age=60)
         return res
     except ValidationError as e:
 

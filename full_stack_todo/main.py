@@ -1,4 +1,4 @@
-from fastapi import FastAPI,Form,Depends,status,Cookie,Query
+from fastapi import FastAPI,Form,Depends,status,Cookie,Query,BackgroundTasks
 from pydantic import BaseModel,EmailStr,validator,ValidationError
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
@@ -389,9 +389,11 @@ def login(
 async def register(
 # request:Request,
 # response:Response,
+background_tasks: BackgroundTasks,
 email:EmailStr=Form(...),
 apass:str=Form(...),
-conn=Depends(get_db)
+conn=Depends(get_db),
+
 
 ):
     try:
@@ -411,7 +413,8 @@ conn=Depends(get_db)
         access_token = create_access_token(
         data={"sub": user_in.email}, expires_delta=access_token_expires
         )        
-        await send_email([user_in.email],access_token)
+        background_tasks.add_task(send_email, [user_in.email], access_token)
+        # await send_email([user_in.email],access_token)
         cursor.execute(
             "INSERT INTO users (email, password_,disables)"
             "VALUES (%s, %s,'False') RETURNING email",
@@ -422,7 +425,7 @@ conn=Depends(get_db)
         
         print(user_data)
         res=RedirectResponse("/",status_code=status.HTTP_303_SEE_OTHER)
-        res.set_cookie(key="token", value=access_token, httponly=True, max_age=60)
+        res.set_cookie(key="token", value=access_token, httponly=True, max_age=120)
         return res
     except ValidationError as e:
 

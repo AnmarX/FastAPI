@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 import time
 from typing import List
+import secrets
 
 load_dotenv()
 SECRET_KEY=os.getenv("secret_key")
@@ -212,6 +213,8 @@ async def verifying(
         token:Annotated[for_id,Depends(get_current_user)],
         conn=Depends(get_db)
 ):
+    ## IF THE token i deleted before auth of the token it will generate 
+    # #  AttributeError: 'bool' object has no attribute 'user_id'
     cursor=conn.cursor()
     print(token.user_id)
     print(token.disables)

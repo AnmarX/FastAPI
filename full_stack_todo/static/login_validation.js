@@ -26,7 +26,7 @@ function updateButtonAndErrors() {
 function restrictSpecialChars(event) {
     const char = event.key;
     const emailRegex = /^[a-zA-Z0-9@.]*$/;
-    if (!emailRegex.test(char) && char !== '@' && char !== '.') {
+    if (!emailRegex.test(char) && char !== '@' && char !== '.'&& char !=="-" && char !=="_") {
       event.preventDefault();
     }
   }

@@ -2,7 +2,7 @@ version: "3"
 services:
 # # this dockerized db is for develompent only
   db:
-    image: postgis/postgis:15-3.3-alpine
+    image: postgres:16rc1-alpine3.18
     container_name: postgis_fastapi_signup_security
     environment:
       - POSTGRES_USER=${PG_USER}
@@ -10,7 +10,7 @@ services:
       - POSTGRES_DB=${PG_DB}
       # - POSTGRES_HOST_AUTH_METHOD=trust
     ports:
-      - "5432:5432"
+      - "5435:5432"
     restart: unless-stopped
     volumes:
       - ./db/CREATE_ALL_TABLE.sql:/docker-entrypoint-initdb.d/init.sql

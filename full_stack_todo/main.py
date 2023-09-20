@@ -10,7 +10,7 @@ from hashing import hash_the_password,verify_password
 from fastapi.responses import RedirectResponse,Response,JSONResponse,HTMLResponse
 from typing import Annotated
 from datetime import datetime, timedelta
-from jose import JWTError, jwt
+from jose import JWTError, jwt,ExpiredSignatureError
 from todo_CURD import models
 import os
 from starlette.middleware.sessions import SessionMiddleware
@@ -111,7 +111,7 @@ def get_user(email,cur):
 
 def authenticate_user(cur,email,password):
     user=get_user(email,cur)
-    print(user)
+    # print(user)
     if not user:
         return False
     if not verify_password(password,user.password_):
@@ -125,13 +125,22 @@ def create_access_token(data:dict,expires_delta: timedelta | None = None):
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.utcnow() + timedelta(minutes=60)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
     
 
-
+def temp_access_token(data:dict,expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=2)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+    
 
 
 async def get_current_user(token: Annotated[str|None, Cookie()]=None,conn=Depends(get_db)):
@@ -189,7 +198,7 @@ async def send_email(
         <title>Document</title>
         </head>
         <body>
-        <a href="http://localhost:9999/verify-email?token={token}">
+        <a href="http://localhost:9999/verify-email/{token}">
             please verify your account
         </a>
         </body>
@@ -207,25 +216,56 @@ async def send_email(
 
 
 
+def is_token_expired(token: str):
+    try:
+        payload=jwt.decode(token,SECRET_KEY,ALGORITHM)
+        expiration_time = datetime.utcfromtimestamp(payload["exp"])
+        print(expiration_time)
+        current_time = datetime.utcnow()
+        return current_time > expiration_time
+    except ExpiredSignatureError:
+        # Token has expired
+        print("exp1")
+        return True
+    except JWTError:
+        # Token is invalid or cannot be decoded
+        print("exp2")
+        return True
+    except AttributeError:
+        # #this should take you to the login page again that have to send the verify link again
+        return True
+    
 
-@app.get("/verify-email")
+
+@app.get("/verify-email/{user_token}")
 async def verifying(
-        token:Annotated[for_id,Depends(get_current_user)],
+        user:Annotated[for_id,Depends(get_current_user)],
+        user_token:str,
         conn=Depends(get_db)
 ):
+    cursor=conn.cursor()
+    user_exp=is_token_expired(user_token)
+    if user_exp is True:
+        # # add here a link to send a new link rather than this return msg
+        return {"msg":"the validation link has expired"}
+    if not user.disables:
+        cursor.execute("UPDATE users SET disables = %s WHERE user_id = %s", (True,user.user_id))
+        conn.commit()
+    return {"msg":"done"}
+
     ## IF THE token i deleted before auth of the token it will generate 
     # #  AttributeError: 'bool' object has no attribute 'user_id'
-    cursor=conn.cursor()
-    print(token.user_id)
-    print(token.disables)
-    if token:
-        if not token.disables:
-            cursor.execute("UPDATE users SET disables = %s WHERE user_id = %s", (True,token.user_id))
-            conn.commit()
-            return {"msg":"done"}
-            # return RedirectResponse("/logedin-page",status_code=status.HTTP_303_SEE_OTHER)
+    # cursor=conn.cursor()
+    # print(token.user_id)
+    # print(token.disables)
+    # if token:
+    #     if not token.disables:
+    #         cursor.execute("UPDATE users SET disables = %s WHERE user_id = %s", (True,token.user_id))
+    #         conn.commit()
+    #         return {"msg":"done"}
+    #         # return RedirectResponse("/logedin-page",status_code=status.HTTP_303_SEE_OTHER)
 
-    return {"mg":"none"}
+    # return {"mg":"none"}
     
     
 
@@ -413,11 +453,17 @@ conn=Depends(get_db),
 
         hashed_password = hash_the_password(user_in.password_)
 
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token_expires = timedelta(minutes=10)
         access_token = create_access_token(
         data={"sub": user_in.email}, expires_delta=access_token_expires
         )        
-        await background_tasks.add_task(send_email, [user_in.email], access_token)
+
+
+        temp_token_expires = timedelta(minutes=2)
+        temp_token=temp_access_token(
+        data={"sub": user_in.email}, expires_delta=temp_token_expires
+        )
+        background_tasks.add_task(send_email, [user_in.email], temp_token)
         # await send_email([user_in.email],access_token)
         cursor.execute(
             "INSERT INTO users (email, password_,disables)"
@@ -429,7 +475,7 @@ conn=Depends(get_db),
         
         print(user_data)
         res=RedirectResponse("/",status_code=status.HTTP_303_SEE_OTHER)
-        res.set_cookie(key="token", value=access_token, httponly=True, max_age=120)
+        res.set_cookie(key="token", value=access_token, httponly=True, max_age=3600)
         return res
     except ValidationError as e:
 
@@ -449,7 +495,6 @@ def sign_out(
 
 
 # #todo # #
-# fix the email verify things 
 # add more project to the home page
 # if the user register take him to the loged in page and show them their accout
 # add back buttons

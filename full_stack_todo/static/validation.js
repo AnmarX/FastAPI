@@ -25,10 +25,17 @@
           emailMatchError.style.display = emailValid ? "none" : "block";
         }
 
-        function restrictSpecialChars(event) {
+        // function restrictSpecialChars(event) {
+        //     const char = event.key;
+        //     const emailRegex = /^[a-zA-Z0-9@.]*$/;
+        //     if (!emailRegex.test(char) && char !== '@' && char !== '.') {
+        //       event.preventDefault();
+        //     }
+        //   }
+          function restrictSpecialChars(event) {
             const char = event.key;
             const emailRegex = /^[a-zA-Z0-9@.]*$/;
-            if (!emailRegex.test(char) && char !== '@' && char !== '.') {
+            if (!emailRegex.test(char) && char !== '@' && char !== '.'&& char !=="-" && char !=="_") {
               event.preventDefault();
             }
           }

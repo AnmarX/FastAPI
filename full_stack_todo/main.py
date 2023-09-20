@@ -164,6 +164,25 @@ async def get_current_user(token: Annotated[str|None, Cookie()]=None,conn=Depend
     return user
 
 
+def get_user_for_validation(token: str,conn):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload=jwt.decode(token,SECRET_KEY,ALGORITHM)
+        email:str=payload.get("sub")
+        if not email:
+            raise credentials_exception
+        # token_data=For_token_valid(email=email)
+    except (AttributeError,JWTError,TypeError):
+        return False
+    cursor=conn.cursor()
+    user = get_user(email,cursor)
+    if user is None:
+       return False
+    return user
 
 async def get_current_active_user(
     current_user: Annotated[for_id, Depends(get_current_user)]
@@ -242,17 +261,18 @@ async def verifying(
         # user:Annotated[for_id,Depends(get_current_user)],
         user_token:str,
         conn=Depends(get_db)
+        
 ):
     cursor=conn.cursor()
     user_exp=is_token_expired(user_token)
     if user_exp is True:
         # # add here a link to send a new link rather than this return msg
         return {"msg":"the validation link has expired"}
-    user=Annotated[for_id,get_current_user(user_token,conn)]
-    # user=get_current_user(user_token,conn)
-    if not user.disables:
-        cursor.execute("UPDATE users SET disables = %s WHERE user_id = %s", (True,user.user_id))
-        conn.commit()
+    # user = await get_current_user(user_token,conn)
+    user=get_user_for_validation(user_token,conn)
+    print(user.user_id)
+    cursor.execute("UPDATE users SET disables = %s WHERE user_id = %s", (True,user.user_id))
+    conn.commit()
     return {"msg":"done"}
 
     ## IF THE token i deleted before auth of the token it will generate 

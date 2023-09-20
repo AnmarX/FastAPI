@@ -202,7 +202,7 @@ async def send_email(
        )
     
     await fm.send_message(message)
-    return "email sent"
+    print("email sent")
 
 
 
@@ -322,7 +322,8 @@ def show_todos(
     
     
 
-
+# # NEED to add here if the user tryied to access this endpoint without token
+# # i will send him back to the login page
 @app.get("/logedin-page")
 async def signup(
     request: Request
@@ -413,7 +414,7 @@ conn=Depends(get_db),
         access_token = create_access_token(
         data={"sub": user_in.email}, expires_delta=access_token_expires
         )        
-        background_tasks.add_task(send_email, [user_in.email], access_token)
+        await background_tasks.add_task(send_email, [user_in.email], access_token)
         # await send_email([user_in.email],access_token)
         cursor.execute(
             "INSERT INTO users (email, password_,disables)"
@@ -441,3 +442,15 @@ def sign_out(
     res=RedirectResponse("/")
     res.delete_cookie(key="token")
     return res
+
+
+
+# #todo # #
+# fix the email verify things 
+# add more project to the home page
+# if the user register take him to the loged in page and show them their accout
+# add back buttons
+# make every endpoint protected even the home page only leave login and register alone
+# in the future try to put the register and the login in seperate containers to apply microservice
+# add forget password button
+# add the profile page

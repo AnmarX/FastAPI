@@ -239,7 +239,7 @@ def is_token_expired(token: str):
 
 @app.get("/verify-email/{user_token}")
 async def verifying(
-        user:Annotated[for_id,Depends(get_current_user)],
+        # user:Annotated[for_id,Depends(get_current_user)],
         user_token:str,
         conn=Depends(get_db)
 ):
@@ -248,6 +248,8 @@ async def verifying(
     if user_exp is True:
         # # add here a link to send a new link rather than this return msg
         return {"msg":"the validation link has expired"}
+    user=Annotated[for_id,get_current_user(user_token,conn)]
+    # user=get_current_user(user_token,conn)
     if not user.disables:
         cursor.execute("UPDATE users SET disables = %s WHERE user_id = %s", (True,user.user_id))
         conn.commit()

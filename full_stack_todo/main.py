@@ -267,9 +267,9 @@ async def verifying(
     user_exp=is_token_expired(user_token)
     if user_exp is True:
         # # add here a link to send a new link rather than this return msg
-        return {"msg":"the validation link has expired"}
-    # user = await get_current_user(user_token,conn)
-    user=get_user_for_validation(user_token,conn)
+        return {"msg":"the validation link or the token has expired"}
+    user = await get_current_user(user_token,conn)
+    # user=get_user_for_validation(user_token,conn)
     print(user.user_id)
     cursor.execute("UPDATE users SET disables = %s WHERE user_id = %s", (True,user.user_id))
     conn.commit()

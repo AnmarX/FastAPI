@@ -233,22 +233,23 @@ async def send_email(
 
 def is_token_expired(token: str):
     try:
-        payload=jwt.decode(token,SECRET_KEY,ALGORITHM)
-        expiration_time = datetime.utcfromtimestamp(payload["exp"])
-        print(expiration_time)
-        current_time = datetime.utcnow()
-        return current_time > expiration_time
-    except ExpiredSignatureError:
+        jwt.decode(token,SECRET_KEY,ALGORITHM)
+        # expiration_time = datetime.utcfromtimestamp(payload["exp"])
+        # print(expiration_time)
+        # current_time = datetime.utcnow()
+        # return current_time > expiration_time
+    except (ExpiredSignatureError,JWTError):
         # Token has expired
+        # Token is invalid or cannot be decoded
         print("exp1")
         return True
-    except JWTError:
-        # Token is invalid or cannot be decoded
-        print("exp2")
-        return True
-    except AttributeError:
-        # #this should take you to the login page again that have to send the verify link again
-        return True
+    # except JWTError:
+    #     # Token is invalid or cannot be decoded
+    #     print("exp2")
+    #     return True
+    # except AttributeError:
+    #     # #this should take you to the login page again that have to send the verify link again
+    #     return True
     
 
 
@@ -256,15 +257,17 @@ def is_token_expired(token: str):
 async def verifying(
         # user:Annotated[for_id,Depends(get_current_user)],
         user_token:str,
-        conn=Depends(get_db)
-        
+        conn=Depends(get_db)    
 ):
     cursor=conn.cursor()
     user_exp=is_token_expired(user_token)
     if user_exp is True:
         # # add here a link to send a new link rather than this return msg
-        return {"msg":"the validation link or the token has expired"}
+        return {"msg":"the validation link has expired"}
+    
     user = await get_current_user(user_token,conn)
+    if user is False:
+        return {"msg":"token is expired go back to login again"}
     # user=get_user_for_validation(user_token,conn)
     print(user.user_id)
     cursor.execute("UPDATE users SET disables = %s WHERE user_id = %s", (True,user.user_id))
@@ -471,7 +474,7 @@ conn=Depends(get_db),
 
         hashed_password = hash_the_password(user_in.password_)
 
-        access_token_expires = timedelta(minutes=10)
+        access_token_expires = timedelta(minutes=60)
         access_token = create_access_token(
         data={"sub": user_in.email}, expires_delta=access_token_expires
         )        

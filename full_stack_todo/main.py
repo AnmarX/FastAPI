@@ -164,25 +164,25 @@ async def get_current_user(token: Annotated[str|None, Cookie()]=None,conn=Depend
     return user
 
 
-def get_user_for_validation(token: str,conn):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload=jwt.decode(token,SECRET_KEY,ALGORITHM)
-        email:str=payload.get("sub")
-        if not email:
-            raise credentials_exception
-        # token_data=For_token_valid(email=email)
-    except (AttributeError,JWTError,TypeError):
-        return False
-    cursor=conn.cursor()
-    user = get_user(email,cursor)
-    if user is None:
-       return False
-    return user
+# def get_user_for_validation(token: str,conn):
+#     credentials_exception = HTTPException(
+#         status_code=status.HTTP_401_UNAUTHORIZED,
+#         detail="Could not validate credentials",
+#         headers={"WWW-Authenticate": "Bearer"},
+#     )
+#     try:
+#         payload=jwt.decode(token,SECRET_KEY,ALGORITHM)
+#         email:str=payload.get("sub")
+#         if not email:
+#             raise credentials_exception
+#         # token_data=For_token_valid(email=email)
+#     except (AttributeError,JWTError,TypeError):
+#         return False
+#     cursor=conn.cursor()
+#     user = get_user(email,cursor)
+#     if user is None:
+#        return False
+#     return user
 
 async def get_current_active_user(
     current_user: Annotated[for_id, Depends(get_current_user)]

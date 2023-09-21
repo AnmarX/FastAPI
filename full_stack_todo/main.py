@@ -54,10 +54,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 
-
-
-
-
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 
 

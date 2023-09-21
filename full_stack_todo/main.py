@@ -160,26 +160,6 @@ async def get_current_user(token: Annotated[str|None, Cookie()]=None,conn=Depend
     return user
 
 
-# def get_user_for_validation(token: str,conn):
-#     credentials_exception = HTTPException(
-#         status_code=status.HTTP_401_UNAUTHORIZED,
-#         detail="Could not validate credentials",
-#         headers={"WWW-Authenticate": "Bearer"},
-#     )
-#     try:
-#         payload=jwt.decode(token,SECRET_KEY,ALGORITHM)
-#         email:str=payload.get("sub")
-#         if not email:
-#             raise credentials_exception
-#         # token_data=For_token_valid(email=email)
-#     except (AttributeError,JWTError,TypeError):
-#         return False
-#     cursor=conn.cursor()
-#     user = get_user(email,cursor)
-#     if user is None:
-#        return False
-#     return user
-
 async def get_current_active_user(
     current_user: Annotated[for_id, Depends(get_current_user)]
 ):
@@ -243,13 +223,6 @@ def is_token_expired(token: str):
         # Token is invalid or cannot be decoded
         print("exp1")
         return True
-    # except JWTError:
-    #     # Token is invalid or cannot be decoded
-    #     print("exp2")
-    #     return True
-    # except AttributeError:
-    #     # #this should take you to the login page again that have to send the verify link again
-    #     return True
     
 
 
@@ -274,30 +247,6 @@ async def verifying(
     conn.commit()
     return {"msg":"done"}
 
-    ## IF THE token i deleted before auth of the token it will generate 
-    # #  AttributeError: 'bool' object has no attribute 'user_id'
-    # cursor=conn.cursor()
-    # print(token.user_id)
-    # print(token.disables)
-    # if token:
-    #     if not token.disables:
-    #         cursor.execute("UPDATE users SET disables = %s WHERE user_id = %s", (True,token.user_id))
-    #         conn.commit()
-    #         return {"msg":"done"}
-    #         # return RedirectResponse("/logedin-page",status_code=status.HTTP_303_SEE_OTHER)
-
-    # return {"mg":"none"}
-    
-    
-
-
-
-# just for testing and visual
-@app.get("/new-template")
-async def home(request: Request):
-    return templates.TemplateResponse("try.html", {"request": request})
-
-
 
 
 @app.get("/")
@@ -320,28 +269,9 @@ async def signup(
 
 
 
-
-
-# @app.get("/login-page")
-# async def signup(
-#     request: Request,
-#     token:Annotated[str,Cookie()]=None,
-#                  ):
-#     print(token)
-#     if token is None:
-#         return templates.TemplateResponse("login.html", {"request": request})
-
-#     redirect_url = f"/logedin-page?token={token}"
-#     response = RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
-#     return response
-    
-
-
-
 @app.get("/todos-page")
 async def signup(
     request: Request,
-    for_session:Response,
     token:Annotated[for_id,Depends(get_current_active_user)],
     conn=Depends(get_db)
                  ):

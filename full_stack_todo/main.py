@@ -17,8 +17,6 @@ from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 
-# import ssl
-# ssl._create_default_https_context = ssl._create_unverified_context
 
 load_dotenv()
 SECRET_KEY=os.getenv("secret_key")
@@ -204,7 +202,7 @@ async def send_email(
        subject="Fastapi-Mail module",
        recipients=user_email,  # List of recipients, as many as you can pass  
        body=template,
-       subtype="html"
+       subtype=MessageType.html
        )
     
     await fm.send_message(message)

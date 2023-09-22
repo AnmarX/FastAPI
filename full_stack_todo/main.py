@@ -40,7 +40,8 @@ conf = ConnectionConfig(
     USE_CREDENTIALS = True,
     VALIDATE_CERTS = True
 )
-
+print(email_pass)
+print(email_for_msg)
 
 
 app=FastAPI()
@@ -352,7 +353,7 @@ def login(
         headers={"WWW-Authenticate": "Bearer"},
     )
     cur=conn.cursor()
-    user=authenticate_user(cur,email,apass)
+    user=authenticate_user(cur,email.lower(),apass)
     # #modify here
     if not user:
         return credentials_exception
@@ -392,7 +393,7 @@ conn=Depends(get_db),
 
 ):
     try:
-        user_in= UserPassword(email=email,password_=apass,disables=False)
+        user_in= UserPassword(email=email.lower(),password_=apass,disables=False)
         # validation_for_email=EmailSchema(email_verify=email)
         cursor = conn.cursor()
 

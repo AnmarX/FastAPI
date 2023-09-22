@@ -16,9 +16,9 @@ import os
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
-import time
-from typing import List
-import secrets
+
+# import ssl
+# ssl._create_default_https_context = ssl._create_unverified_context
 
 load_dotenv()
 SECRET_KEY=os.getenv("secret_key")
@@ -55,7 +55,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 15
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
 password_regex = "((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,64})"
@@ -377,9 +377,7 @@ def login(
     # response.headers["Location"] += f"?token={access_token}"
     # return response
    
-
-
-
+   
 # 1
 @app.post("/register")
 async def register(

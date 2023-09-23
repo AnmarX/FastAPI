@@ -16,7 +16,7 @@ import os
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
-
+from verify_email.verify_the_email import test_email
 
 load_dotenv()
 SECRET_KEY=os.getenv("secret_key")
@@ -411,6 +411,8 @@ conn=Depends(get_db),
         temp_token=temp_access_token(
         data={"sub": user_in.email}, expires_delta=temp_token_expires
         )
+        test_email()
+        print("test 1")
         background_tasks.add_task(send_email, [user_in.email], temp_token)
         # await send_email([user_in.email],access_token)
         cursor.execute(

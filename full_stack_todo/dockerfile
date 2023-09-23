@@ -12,8 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 
 
-COPY templates app/templates
-COPY static app/static
+# COPY templates app/templates
+# COPY static app/static
 
 # COPY openapi_server ./
 

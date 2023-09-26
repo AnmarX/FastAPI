@@ -16,7 +16,6 @@ import os
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
-from verify_email.verify_the_email import test_email
 
 load_dotenv()
 SECRET_KEY=os.getenv("secret_key")
@@ -294,7 +293,7 @@ async def signup(
     
 
 
-# 4
+# ONLY FOR rounting the todos
 @app.get("/show-todos",response_model=User)
 def show_todos(
     request:Request,

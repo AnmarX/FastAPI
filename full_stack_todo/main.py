@@ -36,7 +36,7 @@ conf = ConnectionConfig(
     MAIL_STARTTLS = True,
     MAIL_SSL_TLS = False,
     USE_CREDENTIALS = True,
-    VALIDATE_CERTS = True
+    VALIDATE_CERTS = False
 )
 print(email_pass)
 print(email_for_msg)
@@ -411,8 +411,8 @@ conn=Depends(get_db),
         temp_token=temp_access_token(
         data={"sub": user_in.email}, expires_delta=temp_token_expires
         )
-        test_email()
-        print("test 1")
+        # test_email()
+        # print("test 1")
         background_tasks.add_task(send_email, [user_in.email], temp_token)
         # await send_email([user_in.email],access_token)
         cursor.execute(

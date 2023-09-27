@@ -21,15 +21,15 @@ services:
       timeout: 30s
       retries: 20
 
-  redis:
-    image: redis:alpine3.18
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 30s
-      retries: 10
+  # redis:
+  #   image: redis:alpine3.18
+  #   ports:
+  #     - "6379:6379"
+  #   healthcheck:
+  #     test: ["CMD", "redis-cli", "ping"]
+  #     interval: 30s
+  #     timeout: 30s
+  #     retries: 10
 
 
   pyscript_for_openapi:
@@ -41,8 +41,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_healthy
+      # redis:
+      #   condition: service_healthy
    
     # the 9999 is on my machine but the 8080 inside the container 
     # the port here is only for mapping but in dockerfile the port to specify the port that the app will run inside the container

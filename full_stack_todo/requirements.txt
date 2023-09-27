@@ -16,3 +16,5 @@ jinja2
 python-multipart
 itsdangerous
 fastapi-mail
+fastapi-limiter~=0.15
+redis~=5.0

@@ -1,0 +1,9 @@
+1-make the a new table for users that registerd, that if they try to add the password and email to many times i will lock the user for some time
+2-if someone is spamming on the website i will block the IP for some time also
+3-add more project to the home page(front-end)
+4-if the user register take him to the loged in page and show them their accout(back-end)
+5-add back buttons(front-end)
+6-make every endpoint protected even the loged in home page only leave login and register alone(back-end)
+7-in the future try to put the register and the login in seperate containers to apply microservice(back-end)
+8-add forget password button(back-end and front-end)
+9-add the profile page(back-end and front-end)

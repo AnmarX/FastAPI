@@ -440,14 +440,3 @@ def sign_out(
     res=RedirectResponse("/")
     res.delete_cookie(key="token")
     return res
-
-
-
-# #todo # #
-# add more project to the home page
-# if the user register take him to the loged in page and show them their accout
-# add back buttons
-# make every endpoint protected even the home page only leave login and register alone
-# in the future try to put the register and the login in seperate containers to apply microservice
-# add forget password button
-# add the profile page

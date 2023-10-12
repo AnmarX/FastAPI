@@ -7,3 +7,4 @@
 7-in the future try to put the register and the login in seperate containers to apply microservice(back-end)
 8-add forget password button(back-end and front-end)
 9-add the profile page(back-end and front-end)
+10-make the loged in page protected

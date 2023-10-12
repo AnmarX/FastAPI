@@ -16,6 +16,19 @@ CREATE TABLE IF NOT EXISTS public.todo (
 );
 
 
+-- CREATE TABLE IF NOT EXISTS login_attempts (
+--     attempt_id serial PRIMARY KEY,
+--     user_id INT,
+--     attempt_timestamp TIMESTAMPTZ NOT NULL,
+--     failed_attempts INT NOT NULL,
+--     suspended BOOLEAN DEFAULT FALSE,
+--     suspension_start_timestamp TIMESTAMPTZ
+--     CONSTRAINT user_id FOREIGN KEY (user_id) REFERENCES public.users (user_id)
+
+-- );
+
+
+
 -- CREATE TABLE IF NOT EXISTS public.todo (
 --     todo_id serial NOT NULL PRIMARY KEY,
 --     user_id int,

@@ -3,7 +3,7 @@ from pydantic import BaseModel,EmailStr,validator,ValidationError
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 from fastapi.staticfiles import StaticFiles
-from db_connection.connection import get_db
+from db_connection.connection import get_db,get_db_for_auth
 from pydantic.fields import Field
 from fastapi.exceptions import HTTPException
 from hashing import hash_the_password,verify_password
@@ -23,6 +23,8 @@ ALGORITHM=os.getenv("ALGORITHM")
 email_pass=os.getenv("email_pass")
 email_for_msg=os.getenv("email_for_msg")
 
+
+
 templates=Jinja2Templates(directory="templates")
 
 
@@ -40,8 +42,8 @@ conf = ConnectionConfig(
 print(email_pass)
 print(email_for_msg)
 
-
-app=FastAPI()
+# docs_url="None", redoc_url=None
+app=FastAPI(redoc_url=None)
 fm = FastMail(conf)
 
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
@@ -440,3 +442,57 @@ def sign_out(
     res=RedirectResponse("/")
     res.delete_cookie(key="token")
     return res
+
+MAX_USER_ATTEMPTS = 5
+MAX_IP_ATTEMPTS = 1
+BLOCK_DURATION = timedelta(minutes=10)
+
+@app.get("/test-attemtps")
+async def test_attempts(request:Request,conn=Depends(get_db_for_auth)):
+    client_ip = request.client.host
+    print(client_ip)
+    # Check IP block
+    async with conn:
+        async with conn.cursor() as cur:
+            await cur.execute("SELECT * FROM ip_attempts WHERE ip_address = %s", (client_ip,))
+            ip_data=await cur.fetchone()
+            last_attempt_time=ip_data[2]
+            attempt_count=ip_data[1]
+            if ip_data:
+                print("inside if")
+                print(datetime.now())
+                time_since_last_attempt = datetime.now() - last_attempt_time
+                print("last time ",time_since_last_attempt)
+                print("block duration ",BLOCK_DURATION)
+                print(bool(time_since_last_attempt >= BLOCK_DURATION))
+                if time_since_last_attempt >= BLOCK_DURATION:
+                    print("first if inside")
+                    await conn.execute("UPDATE ip_attempts SET attempt_count = 0 WHERE ip_address = %s", (client_ip,))
+                elif attempt_count >= MAX_IP_ATTEMPTS:
+                    print("2")
+                    raise HTTPException(status_code=429, detail="Too many requests from this IP")
+
+
+
+
+
+
+
+
+    # async with conn:
+    #     async with conn.cursor() as cur:
+    #         await cur.execute("SELECT * FROM users WHERE user_id = %s", (1,))
+    #         return (await cur.fetchone())[0]
+            # OR # #
+            # data=await cur.fetchone()
+            # email=data[0]
+            # return email
+
+
+    # async with conn:
+    #     async with conn.cursor() as cur:
+    #         await cur.execute("SELECT * FROM users")
+    #   #     this will retrive all the data as a list of list (fetchall)
+    #         ip_date=await cur.fetchall()
+            
+    # return ip_date

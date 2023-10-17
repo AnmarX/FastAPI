@@ -23,10 +23,18 @@ DATABASE_CONFIG = {
     "port": PG_PORT,
 }
 
-# Database connection helper function
+
 def get_db():
     conn = psycopg.connect(**DATABASE_CONFIG)
     try:
         yield conn
     finally:
         conn.close()
+
+async def get_db_for_auth():
+    conn = await psycopg.AsyncConnection.connect(**DATABASE_CONFIG)
+    try:
+        yield conn
+    finally:
+        await conn.close()
+

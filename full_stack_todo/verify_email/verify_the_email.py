@@ -12,9 +12,9 @@ email_pass = os.getenv('email_pass')
 def send_html_email():
     # Create an HTML email message
     msg = MIMEMultipart()
-    msg['From'] = email_for_msg
-    msg['To'] = "recipient@example.com"
-    msg['Subject'] = "HTML Email with Link Example"
+    # msg['From'] = email_for_msg
+    # msg['To'] = "recipient@example.com"
+    # msg['Subject'] = "HTML Email with Link Example"
 
     # HTML content with a hyperlink
     html_content = """

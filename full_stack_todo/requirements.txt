@@ -1,4 +1,4 @@
-passlib~=1.7
+passlib
 pydantic[email]
 python-jose[cryptography]
 psycopg~=3.1
@@ -16,5 +16,7 @@ jinja2
 python-multipart
 itsdangerous
 fastapi-mail
-# fastapi-limiter~=0.15
-# redis~=5.0
+slowapi
+fastapi-limiter
+redis
+requests

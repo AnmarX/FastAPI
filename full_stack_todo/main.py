@@ -16,6 +16,15 @@ import os
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+import requests
+
+# from slowapi import Limiter, _rate_limit_exceeded_handler
+# from slowapi.util import get_remote_address
+# from slowapi.errors import RateLimitExceeded
+import redis.asyncio as rd
+import uvicorn
+from fastapi_limiter import FastAPILimiter
+from fastapi_limiter.depends import RateLimiter
 
 load_dotenv()
 SECRET_KEY=os.getenv("secret_key")
@@ -39,8 +48,8 @@ conf = ConnectionConfig(
     USE_CREDENTIALS = True,
     VALIDATE_CERTS = False
 )
-print(email_pass)
-print(email_for_msg)
+# # limiter slowapi # #
+# limiter = Limiter(key_func=get_remote_address)
 
 # docs_url="None", redoc_url=None
 app=FastAPI(redoc_url=None)
@@ -52,8 +61,12 @@ app.include_router(models.router)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# # limiter slowapi # #
+# app.state.limiter = limiter
+# app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
+    
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
@@ -94,7 +107,10 @@ async def some_middleware(request: Request, call_next):
         response.set_cookie(key='session', value=request.cookies.get('session'), httponly=True,max_age=60)
     return response
 
-
+@app.on_event("startup")
+async def startup():
+    redis = rd.from_url("redis://redis_db", encoding="utf-8", decode_responses=True)
+    await FastAPILimiter.init(redis)
 
 
 
@@ -233,6 +249,7 @@ async def verifying(
         conn=Depends(get_db)    
 ):
     cursor=conn.cursor()
+    # # this is not needed i can just use the get_curret_user function insted it will ckeck the token
     user_exp=is_token_expired(user_token)
     if user_exp is True:
         # # add here a link to send a new link rather than this return msg
@@ -443,34 +460,76 @@ def sign_out(
     res.delete_cookie(key="token")
     return res
 
+
+
+
+
 MAX_USER_ATTEMPTS = 5
 MAX_IP_ATTEMPTS = 1
 BLOCK_DURATION = timedelta(minutes=10)
 
-@app.get("/test-attemtps")
-async def test_attempts(request:Request,conn=Depends(get_db_for_auth)):
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    # Handle rate limit exceeded
+    if exc.status_code == status.HTTP_429_TOO_MANY_REQUESTS:
+        ## just remove return to json and return it on a html page when the error is 429
+        return JSONResponse(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            # content=templates.TemplateResponse()
+            content={"message": "Too many requests, slow down!!!!"},
+        )
+    # Handle other exceptions
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"message": exc.detail},
+    )
+
+# @limiter.limit("5/minute")
+@app.get("/test-attemtps",dependencies=[Depends(RateLimiter(times=5, seconds=60))])
+async def test_attempts(
+    request:Request,
+    conn=Depends(get_db_for_auth)
+    ):    
     client_ip = request.client.host
     print(client_ip)
+    response = requests.get('https://api.github.com')
+    a=response.status_code
+    # response.status_code=200
+    return {"message": f"Status code of endpoint1 is {a}"}
+
     # Check IP block
-    async with conn:
-        async with conn.cursor() as cur:
-            await cur.execute("SELECT * FROM ip_attempts WHERE ip_address = %s", (client_ip,))
-            ip_data=await cur.fetchone()
-            last_attempt_time=ip_data[2]
-            attempt_count=ip_data[1]
-            if ip_data:
-                print("inside if")
-                print(datetime.now())
-                time_since_last_attempt = datetime.now() - last_attempt_time
-                print("last time ",time_since_last_attempt)
-                print("block duration ",BLOCK_DURATION)
-                print(bool(time_since_last_attempt >= BLOCK_DURATION))
-                if time_since_last_attempt >= BLOCK_DURATION:
-                    print("first if inside")
-                    await conn.execute("UPDATE ip_attempts SET attempt_count = 0 WHERE ip_address = %s", (client_ip,))
-                elif attempt_count >= MAX_IP_ATTEMPTS:
-                    print("2")
-                    raise HTTPException(status_code=429, detail="Too many requests from this IP")
+    # async with conn:
+    #     async with conn.cursor() as cur:
+    #         await cur.execute("SELECT * FROM ip_attempts WHERE ip_address = %s", (client_ip,))
+    #         ip_data=await cur.fetchone()
+
+    #         if ip_data:
+    #             last_attempt_time=ip_data[2]
+    #             attempt_count=ip_data[1]
+    #             time_since_last_attempt = datetime.now() - last_attempt_time
+    #             print("last time ",time_since_last_attempt)
+    #             print("block duration ",BLOCK_DURATION)
+    #             print(bool(time_since_last_attempt >= BLOCK_DURATION))
+    #             if time_since_last_attempt >= BLOCK_DURATION:
+    #                 print("first if inside")
+    #                 await conn.execute("UPDATE ip_attempts SET attempt_count = 0 WHERE ip_address = %s", (client_ip,))
+    #             elif attempt_count >= MAX_IP_ATTEMPTS:
+    #                 print("2")
+    #                 raise HTTPException(status_code=429, detail="Too many requests from this IP")
+                
+            # if True:
+            #     # ip attempts
+            #     if ip_data:
+            #         time_since_last_ip_attempt = datetime.now() - ip_data['last_attempt_time']
+            #         if time_since_last_ip_attempt >= BLOCK_DURATION:
+            #             await conn.execute("UPDATE ip_attempts SET attempt_count = 1, last_attempt_time = $2 WHERE ip_address = $1", client_ip, datetime.now())
+            #         else:
+            #             await conn.execute("UPDATE ip_attempts SET attempt_count = attempt_count + 1, last_attempt_time = $2 WHERE ip_address = $1", client_ip, datetime.now())
+            #     else:
+            #         await conn.execute("INSERT INTO ip_attempts (ip_address, attempt_count, last_attempt_time) VALUES ($1, 1, $2)", client_ip, datetime.now())
+                
+            #     return {"status": "failed", "message": "Invalid username or password"}
 
 
 
@@ -496,3 +555,7 @@ async def test_attempts(request:Request,conn=Depends(get_db_for_auth)):
     #         ip_date=await cur.fetchall()
             
     # return ip_date
+
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", debug=True, reload=True)

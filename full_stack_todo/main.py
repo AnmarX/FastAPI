@@ -1,5 +1,5 @@
 from fastapi import FastAPI,Form,Depends,status,Cookie,Query,BackgroundTasks
-from pydantic import BaseModel,EmailStr,validator,ValidationError
+from pydantic import BaseModel,EmailStr,validator,ValidationError,SecretStr
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 from fastapi.staticfiles import StaticFiles
@@ -17,7 +17,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 import requests
-
+import re
 # from slowapi import Limiter, _rate_limit_exceeded_handler
 # from slowapi.util import get_remote_address
 # from slowapi.errors import RateLimitExceeded
@@ -66,6 +66,20 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
+####
+class item(BaseModel):
+    id:int
+
+items={
+    0:item(id=1),
+    2:item(id=10)
+}
+
+@app.get("/")
+def index() -> dict[str,dict[int,item]]:
+    return {"items":items}  
+###   
+
     
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -79,10 +93,29 @@ password_regex = "((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[\W]).{8,64})"
 class User(BaseModel):
     email:EmailStr
     
-
+"""
+You can use the SecretStr and the SecretBytes data types for storing 
+sensitive information that you do not want to be visible in logging or tracebacks.
+"""
 class UserPassword(User):
-    password_:str = Field(regex=password_regex)
+    password_:SecretStr
     disables:bool
+    @validator('password_')
+    def password_regex_validator(cls, v: SecretStr):
+        if v is None or v.get_secret_value() is None:
+            raise ValueError("Password must not be empty")
+        password = v.get_secret_value()
+        if not re.match(password_regex, password):
+            raise ValueError("Password does not meet the required criteria")
+        return v
+
+    
+    """If you would try to send a SecretStr in a response model in e.g. FastAPI,
+    youd need to proactively enable that functionality"""
+    # class Config:
+    #     json_encoders = {
+    #         SecretStr: lambda v: v.get_secret_value() if v else None
+    #      }
 
 class for_id(UserPassword):
     user_id:int
@@ -392,7 +425,17 @@ def login(
     # response.set_cookie(key="token", value=access_token, httponly=True,max_age=1800)
     # response.headers["Location"] += f"?token={access_token}"
     # return response
-   
+
+###### SecretStr reterun an object you need to extract the string from
+# class UserModel(BaseModel):
+#     password: SecretStr
+
+# # When you create an instance of this model:
+# user = UserModel(password="mysecretpassword")
+
+# # To get the actual password as a string you use the get_secret_value() method:
+# plain_password = user.password.get_secret_value()
+#####
    
 # 1
 @app.post("/register")
@@ -401,12 +444,12 @@ async def register(
 # response:Response,
 background_tasks: BackgroundTasks,
 email:EmailStr=Form(...),
-apass:str=Form(...),
+apass:SecretStr=Form(...),
 conn=Depends(get_db),
 
 
 ):
-    try:
+    try:  
         user_in= UserPassword(email=email.lower(),password_=apass,disables=False)
         # validation_for_email=EmailSchema(email_verify=email)
         cursor = conn.cursor()
@@ -416,8 +459,8 @@ conn=Depends(get_db),
             raise HTTPException(status_code=400, detail="email already exists")
         
         
-
-        hashed_password = hash_the_password(user_in.password_)
+        hashed_password = hash_the_password(user_in.password_.get_secret_value())
+        #hashed_password = hash_the_password(user_in.password_)
 
         access_token_expires = timedelta(minutes=60)
         access_token = create_access_token(

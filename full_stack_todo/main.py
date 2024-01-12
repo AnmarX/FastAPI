@@ -66,7 +66,8 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
-####
+########################################
+"""
 class item(BaseModel):
     id:int
 
@@ -78,7 +79,8 @@ items={
 @app.get("/")
 def index() -> dict[str,dict[int,item]]:
     return {"items":items}  
-###   
+"""
+########################################
 
     
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
@@ -102,8 +104,8 @@ class UserPassword(User):
     disables:bool
     @validator('password_')
     def password_regex_validator(cls, v: SecretStr):
-        if v is None or v.get_secret_value() is None:
-            raise ValueError("Password must not be empty")
+        # if v is None or v.get_secret_value() is None:
+        #     raise ValueError("Password must not be empty")
         password = v.get_secret_value()
         if not re.match(password_regex, password):
             raise ValueError("Password does not meet the required criteria")

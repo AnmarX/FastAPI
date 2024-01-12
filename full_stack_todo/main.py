@@ -440,7 +440,7 @@ def login(
 #####
    
 # 1
-@app.post("/register")
+@app.post("/register",dependencies=[Depends(RateLimiter(times=3, seconds=60))])
 async def register(
 # request:Request,
 # response:Response,

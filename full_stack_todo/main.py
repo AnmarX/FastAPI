@@ -601,6 +601,10 @@ async def test_attempts(
             
     # return ip_date
 
+@app.post("/delete-after-it")
+def dell(info:for_id):
+    return info
+
 
 if __name__ == "__main__":
     uvicorn.run("main:app", debug=True, reload=True)

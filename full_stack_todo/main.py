@@ -531,7 +531,10 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     )
 
 # @limiter.limit("5/minute")
-@app.get("/test-attemtps",dependencies=[Depends(RateLimiter(times=5, seconds=60))])
+@app.get("/test-attemtps",
+         dependencies=[Depends(RateLimiter(times=1, seconds=30))
+                       ,Depends(RateLimiter(times=2, seconds=60))]
+                       )
 async def test_attempts(
     request:Request,
     conn=Depends(get_db_for_auth)

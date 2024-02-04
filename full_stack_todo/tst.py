@@ -14,4 +14,5 @@ new_dict = {
 
 
 for person in people:
-    print(person['name'])
+    print(person)
+    #print(person['name'])

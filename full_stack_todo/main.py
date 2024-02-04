@@ -532,8 +532,10 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 # @limiter.limit("5/minute")
 @app.get("/test-attemtps",
-         dependencies=[Depends(RateLimiter(times=1, seconds=30))
-                       ,Depends(RateLimiter(times=2, seconds=60))]
+         dependencies=[
+        Depends(RateLimiter(times=1, seconds=5)),
+        Depends(RateLimiter(times=2, seconds=15)),
+    ]
                        )
 async def test_attempts(
     request:Request,
@@ -607,6 +609,40 @@ async def test_attempts(
 @app.post("/delete-after-it")
 def dell(info:for_id):
     return info
+
+
+
+
+
+from typing import Callable
+# request_count = 0
+# successful_request_count = 0
+
+successful_request_count ={'successful_requests': 0}
+request_counts = {'successful_requests': 0}
+
+@app.middleware("http")
+async def count_successful_requests_middleware(request: Request, call_next: Callable):
+    # global successful_request_count
+    # global request_count
+    response:Response = await call_next(request)
+    if response.status_code== 200:
+        successful_request_count["successful_requests"] += 1
+    if True:
+        request_counts["successful_requests"] += 1
+    return response
+
+
+@app.get(
+    "/multiple",
+    dependencies=[
+        Depends(RateLimiter(times=3, seconds=5)),
+        Depends(RateLimiter(times=6, seconds=15)),
+        Depends(RateLimiter(times=9, seconds=30))
+    ]
+)
+async def multiple():
+    return {"msg": "Hello World","request_count": request_counts["successful_requests"],"200_count":successful_request_count["successful_requests"]}
 
 
 if __name__ == "__main__":
